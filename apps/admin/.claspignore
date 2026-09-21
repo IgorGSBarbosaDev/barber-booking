@@ -1,0 +1,5 @@
+.clasp.json
+.clasp.json.example
+.claspignore
+*.md
+.git*

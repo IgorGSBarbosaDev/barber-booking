@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Environment and local configuration
+.env
+.env.*
+!.env.example
+*.local
+
+# clasp local project configuration and credentials
+.clasp.json
+**/.clasp.json
+.clasprc.json
+
+# Logs, coverage and generated output
+*.log
+logs/
+coverage/
+dist/
+build/
+tmp/
+temp/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Test and tooling caches
+.cache/
+.eslintcache
+.npm/
