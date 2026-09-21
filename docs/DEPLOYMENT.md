@@ -2,6 +2,8 @@
 
 O deployment de produção não foi executado neste setup. Os Web Apps devem ser publicados separadamente, cada um usando seu próprio Script ID e projeto Apps Script.
 
+Antes do deployment, execute a inicialização da base descrita em SETUP.md, rode npm test e confirme que os Script Properties não contêm placeholders.
+
 ## Public Web App
 
 1. Confirme o Script ID em `apps/public/.clasp.json`.

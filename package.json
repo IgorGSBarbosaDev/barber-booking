@@ -4,6 +4,7 @@
   "private": true,
   "description": "Estrutura inicial para o sistema de agendamento da barbearia.",
   "scripts": {
+    "test": "node scripts/validate.mjs",
     "push:public": "clasp -P apps/public push",
     "push:admin": "clasp -P apps/admin push",
     "pull:public": "clasp -P apps/public pull",

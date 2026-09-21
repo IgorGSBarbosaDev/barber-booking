@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root { --ink:#17202a; --muted:#64748b; --brand:#b45309; --brand-dark:#78350f; --surface:#fff; --bg:#fffaf5; --line:#eadfd5; --danger:#b91c1c; --success:#166534; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    a { color:var(--brand-dark); }
+    .shell { max-width:760px; margin:0 auto; padding:18px 16px 48px; }
+    header { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:8px 0 22px; }
+    .brand { font-weight:800; letter-spacing:-.02em; font-size:1.25rem; }
+    .brand span { color:var(--brand); }
+    nav { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    button, input, select { font:inherit; }
+    button { border:0; border-radius:12px; padding:11px 15px; cursor:pointer; }
+    button.primary { background:var(--brand); color:#fff; font-weight:700; }
+    button.secondary { background:#fff; border:1px solid var(--line); color:var(--ink); }
+    button.danger { background:#fee2e2; color:var(--danger); }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    .hero { background:linear-gradient(135deg,#fff4e8,#fff); border:1px solid var(--line); border-radius:22px; padding:28px 22px; margin-bottom:18px; }
+    h1,h2,h3 { margin:0 0 10px; letter-spacing:-.02em; }
+    h1 { font-size:clamp(1.8rem,6vw,2.8rem); line-height:1.05; }
+    h2 { font-size:1.35rem; }
+    p { line-height:1.55; color:var(--muted); }
+    .stack { display:grid; gap:14px; }
+    .grid { display:grid; gap:12px; }
+    .service-grid { grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
+    .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:17px; box-shadow:0 5px 18px rgba(120,53,15,.05); }
+    .service-card { display:flex; flex-direction:column; gap:9px; }
+    .service-card .meta { display:flex; justify-content:space-between; gap:8px; color:var(--muted); font-size:.9rem; }
+    .service-card strong { font-size:1.1rem; }
+    label { display:grid; gap:6px; font-weight:650; font-size:.92rem; }
+    input, select { width:100%; border:1px solid #d8cbc0; background:#fff; border-radius:10px; padding:11px 12px; color:var(--ink); }
+    input:focus, select:focus { outline:3px solid #fed7aa; border-color:var(--brand); }
+    .form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .full { grid-column:1 / -1; }
+    .slot-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:9px; }
+    .slot { background:#fff; border:1px solid var(--line); color:var(--brand-dark); }
+    .slot.selected { background:var(--brand); color:#fff; border-color:var(--brand); }
+    .notice { border-radius:12px; padding:12px 14px; font-size:.94rem; }
+    .notice.info { background:#eff6ff; color:#1e40af; }
+    .notice.error { background:#fef2f2; color:var(--danger); }
+    .notice.success { background:#f0fdf4; color:var(--success); }
+    .muted { color:var(--muted); }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .between { justify-content:space-between; }
+    .hidden { display:none !important; }
+    .loading { color:var(--muted); padding:18px 0; }
+    .appointment-detail { display:grid; gap:8px; }
+    .appointment-detail div { display:flex; justify-content:space-between; gap:12px; border-bottom:1px solid #f1e9e2; padding:7px 0; }
+    .appointment-detail span:first-child { color:var(--muted); }
+    footer { padding-top:26px; color:var(--muted); font-size:.82rem; text-align:center; }
+    @media (max-width:560px) { .form-grid { grid-template-columns:1fr; } .full { grid-column:auto; } header { align-items:flex-start; flex-direction:column; } nav { justify-content:flex-start; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand" id="brand">Barber <span>Booking</span></div>
+      <nav>
+        <button class="secondary" type="button" onclick="showPage('home')">Novo agendamento</button>
+        <button class="secondary" type="button" onclick="showPage('appointment')">Consultar agendamento</button>
+      </nav>
+    </header>
+    <main id="app"><div class="loading">Carregando…</div></main>
+    <footer>Agendamento simples e online.</footer>
+  </div>
+  <script>
+    const INITIAL_PAGE = <?!= JSON.stringify(initialPage || 'home') ?>;
+    const INITIAL_APPOINTMENT_ID = <?!= JSON.stringify(initialAppointmentId || '') ?>;
+    const INITIAL_APPOINTMENT_TOKEN = <?!= JSON.stringify(initialAppointmentToken || '') ?>;
+    const state = {
+      bootstrap: null,
+      page: INITIAL_PAGE,
+      service: null,
+      date: '',
+      slot: null,
+      customer: null,
+      emailVerified: false,
+      otpSent: false,
+      appointment: null,
+      appointmentToken: '',
+      clientId: localStorage.getItem('barber_booking_client_id') || createBrowserId(),
+      browserToken: localStorage.getItem('barber_booking_browser_token') || createBrowserId()
+    };
+    localStorage.setItem('barber_booking_client_id', state.clientId);
+    localStorage.setItem('barber_booking_browser_token', state.browserToken);
+
+    function createBrowserId() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return 'browser-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>'"]/g, function(char) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char];
+      });
+    }
+
+    function money(value) {
+      return Number(value || 0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+    }
+
+    function todayIso() {
+      const now = new Date();
+      return now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+    }
+
+    function callServer(name, payload) {
+      return new Promise(function(resolve) {
+        const runner = google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(function(error) { resolve({ ok:false, error:{ code:'NETWORK_ERROR', message:error && error.message ? error.message : 'Erro de comunicação.' } }); });
+        if (payload === undefined) runner[name](); else runner[name](payload);
+      });
+    }
+
+    function unwrap(result) {
+      if (!result || !result.ok) throw new Error(result && result.error ? result.error.message : 'Não foi possível concluir a operação.');
+      return result.data;
+    }
+
+    function showError(message) {
+      return '<div class="notice error">' + escapeHtml(message) + '</div>';
+    }
+
+    function showPage(page) {
+      state.page = page;
+      state.otpSent = false;
+      state.slot = page === 'home' ? null : state.slot;
+      render();
+      if (page === 'appointment' && INITIAL_APPOINTMENT_ID && !state.appointment) {
+        document.getElementById('appointment-id').value = INITIAL_APPOINTMENT_ID;
+        document.getElementById('appointment-token').value = INITIAL_APPOINTMENT_TOKEN;
+        lookupAppointment();
+      }
+    }
+
+    function render() {
+      const app = document.getElementById('app');
+      if (!state.bootstrap) { app.innerHTML = '<div class="loading">Carregando…</div>'; return; }
+      if (!state.bootstrap.configured) {
+        app.innerHTML = '<section class="hero"><h1>Agendamentos online</h1><p>' + escapeHtml(state.bootstrap.message) + '</p></section>' + showError('O barbeiro ainda precisa concluir a configuração do sistema.');
+        return;
+      }
+      if (state.page === 'appointment') app.innerHTML = appointmentPage();
+      else if (state.page === 'booking') app.innerHTML = bookingPage();
+      else if (state.page === 'confirmation') app.innerHTML = confirmationPage();
+      else app.innerHTML = homePage();
+    }
+
+    function homePage() {
+      const services = state.bootstrap.services || [];
+      return '<section class="hero"><h1>Escolha seu serviço</h1><p>Selecione um serviço para ver os próximos horários disponíveis.</p></section>' +
+        '<section class="stack"><div class="row between"><h2>Serviços</h2><span class="muted">' + services.length + ' disponíveis</span></div>' +
+        (services.length ? '<div class="grid service-grid">' + services.map(function(service) {
+          return '<article class="card service-card"><strong>' + escapeHtml(service.name) + '</strong><span class="muted">' + escapeHtml(service.description || 'Atendimento na barbearia') + '</span><div class="meta"><span>' + service.durationMinutes + ' min</span><b>' + money(service.price) + '</b></div><button class="primary" type="button" onclick="chooseService(\'' + escapeHtml(service.id) + '\')">Escolher</button></article>';
+        }).join('') + '</div>' : '<div class="notice info">Nenhum serviço ativo foi cadastrado ainda.</div>') + '</section>';
+    }
+
+    function chooseService(serviceId) {
+      state.service = state.bootstrap.services.find(function(item) { return item.id === serviceId; });
+      state.date = todayIso();
+      state.slot = null;
+      showPage('booking');
+      loadAvailability();
+    }
+
+    function bookingPage() {
+      const service = state.service;
+      if (!service) return homePage();
+      return '<section class="hero"><button class="secondary" type="button" onclick="showPage(\'home\')">← Voltar</button><h1 style="margin-top:18px">' + escapeHtml(service.name) + '</h1><p>' + service.durationMinutes + ' minutos · ' + money(service.price) + '</p></section>' +
+        '<section class="stack"><div class="card"><label for="booking-date">Escolha uma data<input id="booking-date" type="date" min="' + todayIso() + '" value="' + escapeHtml(state.date) + '" onchange="dateChanged()"></label><div id="availability" class="stack" style="margin-top:16px"><div class="loading">Carregando horários…</div></div></div>' +
+        (state.slot ? customerForm() : '') + '</section>';
+    }
+
+    function dateChanged() {
+      state.date = document.getElementById('booking-date').value;
+      state.slot = null;
+      render();
+      loadAvailability();
+    }
+
+    async function loadAvailability() {
+      if (!state.service || !state.date) return;
+      const container = document.getElementById('availability');
+      if (container) container.innerHTML = '<div class="loading">Consultando disponibilidade…</div>';
+      try {
+        const availability = unwrap(await callServer('publicGetAvailability', { date:state.date, serviceId:state.service.id }));
+        const target = document.getElementById('availability');
+        if (!target) return;
+        if (!availability.slots.length) {
+          target.innerHTML = '<div class="notice info">Não há horários disponíveis nessa data. Escolha outra.</div>';
+          return;
+        }
+        target.innerHTML = '<h3>Horários disponíveis</h3><div class="slot-grid">' + availability.slots.map(function(slot) {
+          return '<button class="slot" type="button" onclick="chooseSlot(\'' + slot.startTime + '\',\'' + slot.endTime + '\')">' + slot.label + '</button>';
+        }).join('') + '</div>';
+      } catch (error) {
+        if (container) container.innerHTML = showError(error.message);
+      }
+    }
+
+    function chooseSlot(startTime, endTime) {
+      state.slot = { startTime:startTime, endTime:endTime };
+      render();
+      document.getElementById('customer-name').focus();
+    }
+
+    function customerForm() {
+      const customer = state.customer || {};
+      return '<div class="card stack"><div><h2>Seus dados</h2><p>Não é necessário criar senha.</p></div><div class="form-grid"><label>Nome<input id="customer-name" required maxlength="120" value="' + escapeHtml(customer.name || '') + '"></label><label>Telefone<input id="customer-phone" required inputmode="tel" value="' + escapeHtml(customer.phone || '') + '"></label><label class="full">E-mail<input id="customer-email" required type="email" value="' + escapeHtml(customer.email || '') + '"></label>' +
+        (state.otpSent ? '<label class="full">Código enviado por e-mail<input id="customer-otp" inputmode="numeric" maxlength="6" placeholder="000000"></label>' : '') + '</div>' +
+        '<div id="customer-message"></div><div class="row"><button class="primary" type="button" onclick="submitCustomer()">' + (state.otpSent ? 'Validar código e confirmar' : 'Confirmar agendamento') + '</button><button class="secondary" type="button" onclick="state.slot=null;render()">Escolher outro horário</button></div></div>';
+    }
+
+    function readCustomer() {
+      return { name:document.getElementById('customer-name').value, phone:document.getElementById('customer-phone').value, email:document.getElementById('customer-email').value, clientId:state.clientId, browserToken:state.browserToken };
+    }
+
+    async function submitCustomer() {
+      const customer = readCustomer();
+      state.customer = customer;
+      const message = document.getElementById('customer-message');
+      if (message) message.innerHTML = '<div class="loading">Processando…</div>';
+      try {
+        if (state.bootstrap.settings.REQUIRE_EMAIL_VERIFICATION && !state.emailVerified) {
+          if (!state.otpSent) {
+            const response = unwrap(await callServer('publicRequestOtp', customer));
+            if (response.required) {
+              state.otpSent = true;
+              render();
+              document.getElementById('customer-otp').focus();
+              return;
+            }
+            state.emailVerified = true;
+          } else {
+            const code = document.getElementById('customer-otp').value;
+            unwrap(await callServer('publicVerifyOtp', Object.assign({}, customer, { code:code })));
+            state.emailVerified = true;
+          }
+        }
+        const result = unwrap(await callServer('publicCreateAppointment', Object.assign({}, customer, { date:state.date, startTime:state.slot.startTime, endTime:state.slot.endTime, serviceId:state.service.id })));
+        state.appointment = result.appointment;
+        state.appointmentToken = result.managementToken;
+        showPage('confirmation');
+      } catch (error) {
+        if (message) message.innerHTML = showError(error.message);
+      }
+    }
+
+    function confirmationPage() {
+      const appointment = state.appointment;
+      if (!appointment) return homePage();
+      const url = location.href.split('?')[0] + '?page=appointment&id=' + encodeURIComponent(appointment.id) + '&token=' + encodeURIComponent(state.appointmentToken);
+      return '<section class="hero"><h1>Agendamento confirmado</h1><p>Seu horário foi reservado. Enviamos a confirmação por e-mail.</p></section><section class="card appointment-detail"><div><span>Serviço</span><strong>' + escapeHtml(appointment.serviceName) + '</strong></div><div><span>Data</span><strong>' + escapeHtml(appointment.date) + '</strong></div><div><span>Horário</span><strong>' + escapeHtml(appointment.startTime) + ' – ' + escapeHtml(appointment.endTime) + '</strong></div><div><span>Valor</span><strong>' + money(appointment.servicePrice) + '</strong></div></section><div class="row" style="margin-top:16px"><a class="secondary" style="text-decoration:none;border:1px solid var(--line);border-radius:12px;padding:11px 15px" href="' + url + '">Consultar/cancelar</a><button class="primary" type="button" onclick="showPage(\'home\')">Novo agendamento</button></div>';
+    }
+
+    function appointmentPage() {
+      return '<section class="hero"><h1>Seu agendamento</h1><p>Use o identificador e o token recebidos no e-mail ou no link de confirmação.</p></section><section class="card stack"><div class="form-grid"><label>Identificador<input id="appointment-id" placeholder="APT_..."></label><label>Token de acesso<input id="appointment-token" placeholder="Token seguro"></label></div><div id="appointment-message"></div><button class="primary" type="button" onclick="lookupAppointment()">Consultar</button></section><div id="appointment-result" style="margin-top:14px"></div>';
+    }
+
+    async function lookupAppointment() {
+      const id = document.getElementById('appointment-id').value;
+      const token = document.getElementById('appointment-token').value;
+      const message = document.getElementById('appointment-message');
+      if (message) message.innerHTML = '<div class="loading">Consultando…</div>';
+      try {
+        const appointment = unwrap(await callServer('publicGetAppointment', { appointmentId:id, token:token }));
+        state.appointment = appointment;
+        state.appointmentToken = token;
+        renderAppointmentResult(appointment);
+      } catch (error) {
+        if (message) message.innerHTML = showError(error.message);
+      }
+    }
+
+    function renderAppointmentResult(appointment) {
+      const canChange = ['CONFIRMED','PENDING'].indexOf(appointment.status) >= 0;
+      document.getElementById('appointment-result').innerHTML = '<section class="card appointment-detail"><div><span>Status</span><strong>' + escapeHtml(appointment.status) + '</strong></div><div><span>Serviço</span><strong>' + escapeHtml(appointment.serviceName) + '</strong></div><div><span>Data</span><strong>' + escapeHtml(appointment.date) + '</strong></div><div><span>Horário</span><strong>' + escapeHtml(appointment.startTime) + ' – ' + escapeHtml(appointment.endTime) + '</strong></div><div><span>Valor</span><strong>' + money(appointment.servicePrice) + '</strong></div></section>' + (canChange ? '<div class="card stack" style="margin-top:12px"><h3>Remarcar ou cancelar</h3><div class="form-grid"><label>Nova data<input id="reschedule-date" type="date" min="' + todayIso() + '"></label><label>Novo horário<input id="reschedule-time" type="time"></label></div><div class="row"><button class="primary" type="button" onclick="rescheduleAppointment()">Remarcar</button><button class="danger" type="button" onclick="cancelAppointment()">Cancelar agendamento</button></div></div>' : '');
+    }
+
+    async function cancelAppointment() {
+      if (!confirm('Deseja realmente cancelar este agendamento?')) return;
+      try {
+        const appointment = unwrap(await callServer('publicCancelAppointment', { appointmentId:state.appointment.id, token:state.appointmentToken }));
+        state.appointment = appointment;
+        renderAppointmentResult(appointment);
+      } catch (error) { document.getElementById('appointment-message').innerHTML = showError(error.message); }
+    }
+
+    async function rescheduleAppointment() {
+      const date = document.getElementById('reschedule-date').value;
+      const startTime = document.getElementById('reschedule-time').value;
+      if (!date || !startTime) { document.getElementById('appointment-message').innerHTML = showError('Informe a nova data e o novo horário.'); return; }
+      try {
+        const result = unwrap(await callServer('publicRescheduleAppointment', { appointmentId:state.appointment.id, token:state.appointmentToken, date:date, startTime:startTime, clientId:state.clientId, browserToken:state.browserToken }));
+        state.appointment = result.appointment;
+        state.appointmentToken = result.managementToken;
+        renderAppointmentResult(result.appointment);
+        document.getElementById('appointment-message').innerHTML = '<div class="notice success">Agendamento remarcado.</div>';
+      } catch (error) { document.getElementById('appointment-message').innerHTML = showError(error.message); }
+    }
+
+    async function boot() {
+      try {
+        state.bootstrap = unwrap(await callServer('publicGetBootstrap'));
+        document.getElementById('brand').innerHTML = escapeHtml(state.bootstrap.barberName || 'Barber') + ' <span>Booking</span>';
+        render();
+        if (state.page === 'appointment' && INITIAL_APPOINTMENT_ID) {
+          document.getElementById('appointment-id').value = INITIAL_APPOINTMENT_ID;
+          document.getElementById('appointment-token').value = INITIAL_APPOINTMENT_TOKEN;
+          lookupAppointment();
+        }
+      } catch (error) {
+        document.getElementById('app').innerHTML = showError(error.message);
+      }
+    }
+    boot();
+  </script>
+</body>
+</html>

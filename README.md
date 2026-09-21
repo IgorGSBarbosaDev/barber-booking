@@ -1,11 +1,11 @@
 # Barber Booking
 
-Estrutura inicial de um sistema de agendamento para uma barbearia. Este repositório prepara o ambiente local e a organização para duas aplicações Google Apps Script, sem implementar regras de negócio neste momento.
+Sistema de agendamento e gestão para uma barbearia autônoma, implementado sobre duas aplicações Google Apps Script independentes.
 
 ## Stack
 
 - Google Apps Script e HTML Service;
-- Google Sheets e Google Calendar como integrações futuras;
+- Google Sheets como fonte oficial, Google Calendar e MailApp para sincronização e notificações;
 - Node.js e npm para o desenvolvimento local;
 - `clasp` para sincronizar cada projeto Apps Script;
 - Git para versionamento.
@@ -17,7 +17,7 @@ O monorepo contém dois Web Apps independentes:
 - `apps/public`: aplicação voltada aos clientes;
 - `apps/admin`: aplicação voltada ao barbeiro.
 
-Ambos começam apenas com um `doGet()` mínimo. Sheets, Calendar, Gmail/MailApp, persistência, autenticação e funcionalidades de negócio ainda não foram implementados.
+As duas aplicações compartilham a mesma base Google Sheets. O `public` atende clientes; o `admin` é restrito à conta do barbeiro. As regras funcionais estão em [docs/PRD.md](docs/PRD.md).
 
 ## Estrutura de diretórios
 
@@ -26,7 +26,7 @@ apps/public/   Projeto Apps Script do Web App público
 apps/admin/    Projeto Apps Script do Web App administrativo
 docs/          Documentação de setup, deploy e arquitetura
 shared/        Espaço para contratos, constantes e documentação compartilhada
-scripts/       Scripts auxiliares locais
+scripts/       Scripts auxiliares locais e validação sem credenciais
 ```
 
 ## Pré-requisitos
@@ -37,9 +37,11 @@ scripts/       Scripts auxiliares locais
 
 ```bash
 npm install
+npm test
 ```
 
 Consulte [docs/SETUP.md](docs/SETUP.md) para reproduzir o ambiente em outro computador.
+O acompanhamento das etapas locais e manuais está em [docs/IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md).
 
 ## Autenticação e configuração do clasp
 
@@ -73,4 +75,4 @@ O deploy não foi executado. Quando a primeira versão estiver pronta, siga [doc
 
 ## Regras para agentes
 
-As regras de trabalho do repositório estão em [AGENTS.md](AGENTS.md). O [PRD.md](PRD.md) permanece reservado para o PRD oficial, que será inserido manualmente.
+As regras de trabalho do repositório estão em [AGENTS.md](AGENTS.md). O PRD oficial está em [docs/PRD.md](docs/PRD.md); [PRD.md](PRD.md) existe apenas como ponte de compatibilidade.

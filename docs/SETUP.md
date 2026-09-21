@@ -50,6 +50,7 @@ Confirme que a estrutura está presente:
 ```bash
 find apps docs shared scripts -maxdepth 3 -type f | sort
 git status
+npm test
 ```
 
 ## AÇÃO MANUAL NO GOOGLE — autenticação
@@ -118,7 +119,29 @@ Os nomes acima são placeholders de documentação; substitua-os pelos IDs reais
 
 Se `clasp create` já tiver gerado o `.clasp.json` no diretório correto, apenas revise o conteúdo e não crie outro arquivo desnecessariamente.
 
+## AÇÃO MANUAL NO GOOGLE — inicializar a base
+
+Depois de vincular o Admin App a um Script ID real, abra o Web App administrativo e use o botão de inicialização, ou execute a função setupBarberBooking no editor do Apps Script com a conta proprietária. A inicialização:
+
+- cria ou abre a Spreadsheet configurada;
+- cria as abas CLIENTS, SERVICES, APPOINTMENTS, WORK_SCHEDULE, SCHEDULE_OVERRIDES, BLOCKS, SETTINGS, AUDIT_LOG e OTP_CODES;
+- grava os valores padrão;
+- cria o horário padrão descrito no PRD;
+- gera o segredo interno no Script Properties;
+- registra o administrador atual e usa o Calendar primary por padrão.
+
+Depois de inicializar o Admin App, copie o mesmo Spreadsheet ID para o Script Property SPREADSHEET_ID do Public App. O CALENDAR_ID e ADMIN_EMAIL devem ser configurados nos Script Properties correspondentes; nunca os coloque no Git.
+
+No editor Apps Script, use **Project Settings > Script properties**. Configure:
+
+- Admin App: SPREADSHEET_ID, CALENDAR_ID, ADMIN_EMAIL e APP_SECRET (APP_SECRET pode ser gerado automaticamente pela inicialização);
+- Public App: SPREADSHEET_ID e CALENDAR_ID.
+
+Não copie o arquivo .clasp.json para o Git e não compartilhe APP_SECRET.
+
 ## AUTOMÁTICO — sincronizar os apps
+
+O primeiro push pode solicitar autorização dos scopes de Sheets, Calendar, MailApp e identidade da conta. Essa autorização é uma ação manual no Google.
 
 Com cada `.clasp.json` configurado:
 

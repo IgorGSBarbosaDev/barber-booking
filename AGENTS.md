@@ -1,7 +1,7 @@
 # Instruções para agentes
 
-- `PRD.md` é a fonte da verdade funcional do projeto.
-- Antes de implementar qualquer feature, consultar o PRD e confirmar o escopo descrito nele.
+- `docs/PRD.md` é a fonte da verdade funcional do projeto. `PRD.md` é apenas uma ponte de compatibilidade.
+- Antes de implementar qualquer feature, consultar `docs/PRD.md` e confirmar o escopo descrito nele.
 - Não inventar features, fluxos, regras de negócio ou integrações não especificadas.
 - Manter compatibilidade com Google Apps Script, HTML Service e `clasp`.
 - Evitar dependências desnecessárias.
