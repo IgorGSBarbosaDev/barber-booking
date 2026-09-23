@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -13,6 +14,19 @@ const errors = [];
 
 for (const relative of requiredFiles) {
   if (!fs.existsSync(path.join(projectRoot, relative))) errors.push('arquivo ausente: ' + relative);
+}
+
+const publicView = fs.readFileSync(path.join(projectRoot, 'apps/public/src/views/PublicApp.html'), 'utf8');
+const publicScript = publicView.match(/<script>([\s\S]*?)<\/script>/);
+if (!publicScript) {
+  errors.push('public: script inline ausente');
+} else {
+  try {
+    const source = publicScript[1].replace(/<\?!=[\s\S]*?\?>/g, 'null');
+    new vm.Script(source, { filename: 'PublicApp.inline.js' });
+  } catch (error) {
+    errors.push('public: sintaxe do script inline inválida: ' + error.message);
+  }
 }
 
 for (const app of ['public', 'admin']) {
