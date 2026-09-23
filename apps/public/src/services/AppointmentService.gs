@@ -169,6 +169,15 @@ function sanitizeAppointmentForClient_(appointment, client) {
   };
 }
 
+function appointmentLookupClientsByEmail_(value, action) {
+  var email = normalizeEmail_(requireText_(value, 'e-mail', 4, 254));
+  if (!isValidEmail_(email)) throwAppError_('INVALID_LOOKUP_EMAIL', 'Informe um e-mail válido.');
+  if (action) checkRateLimit_(email, action);
+  return getSheetRecords_(BARBER_BOOKING.sheets.CLIENTS).filter(function(client) {
+    return normalizeEmail_(client.email) === email;
+  });
+}
+
 function listAppointmentsForLookup_(clients) {
   var clientsById = {};
   clients.forEach(function(client) { clientsById[String(client.id)] = client; });

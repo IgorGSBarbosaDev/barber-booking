@@ -109,13 +109,13 @@ function sendOtpEmail_(customer, otp) {
   sendEmail_(customer.email, subject, body);
 }
 
-function sendAppointmentLookupOtpEmail_(email, otp) {
-  var subject = 'Código para consultar seus agendamentos';
+function sendAppointmentMutationOtpEmail_(email, otp) {
+  var subject = 'Código para alterar seu agendamento';
   var body = [
-    'Seu código para consultar os agendamentos é: ' + otp.code,
+    'Seu código de verificação é: ' + otp.code,
     '',
     'Ele expira em ' + asInteger_(getSetting_('OTP_EXPIRATION_MINUTES', 10), 10) + ' minutos.',
-    'Se você não solicitou essa consulta, ignore este e-mail.'
+    'Se você não solicitou uma alteração, ignore este e-mail.'
   ].join('\n');
   sendEmail_(email, subject, body);
 }

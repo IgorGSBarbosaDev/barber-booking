@@ -325,9 +325,9 @@ Esse valor deverá ser configurável.
 
 ## Verificação
 
-O primeiro agendamento poderá exigir código enviado por e-mail. A consulta de agendamentos também exige um código enviado ao e-mail cadastrado, mesmo quando o cliente informa o telefone.
+O primeiro agendamento poderá exigir código enviado por e-mail. A consulta de agendamentos é feita pelo e-mail cadastrado, sem código de verificação.
 
-Código:
+Quando a verificação do primeiro agendamento estiver habilitada, o código terá:
 
 ```text
 6 dígitos
@@ -335,7 +335,7 @@ expiração curta
 uso único
 ```
 
-Ao consultar agendamentos, o cliente informa o e-mail ou telefone cadastrado. Se um telefone estiver associado a mais de um e-mail, a consulta deve ser feita pelo e-mail. A resposta antes da validação não deve revelar se o cadastro existe.
+Ao consultar agendamentos, o cliente informa o e-mail cadastrado e aciona a busca. A consulta retorna os agendamentos futuros ativos associados ao e-mail informado. O e-mail funciona como identificador, sem confirmar que a pessoa controla a caixa postal.
 
 ## Rate limiting básico
 
@@ -403,16 +403,26 @@ O registro histórico deve permanecer.
 
 # 12. Cancelamento pelo cliente
 
-O cliente poderá informar o e-mail ou telefone cadastrado para localizar seus agendamentos futuros ativos (`PENDING` ou `CONFIRMED`). Antes de exibir resultados, o sistema envia um código de uso único ao e-mail associado ao cadastro. Um telefone associado a mais de um e-mail deve ser consultado pelo e-mail. O cliente pode localizar vários agendamentos feitos com o mesmo contato, inclusive quando foram marcados para outra pessoa.
+O cliente poderá informar o e-mail cadastrado e acionar a busca para localizar seus agendamentos futuros ativos (`PENDING` ou `CONFIRMED`). A consulta não envia nem solicita código de verificação. O e-mail é um identificador, não uma prova de controle da caixa postal; qualquer pessoa que conheça o e-mail pode visualizar os agendamentos associados. O cliente pode localizar vários agendamentos feitos com o mesmo e-mail, inclusive quando foram marcados para outra pessoa. Aplicar rate limiting às consultas por e-mail.
 
-Após validar o código, o cliente poderá:
+Ao tentar cancelar, remarcar ou executar outra alteração, o cliente deverá validar um código de uso único enviado ao e-mail cadastrado. O fluxo será:
+
+- o cliente seleciona uma ação de alteração;
+- o sistema apresenta um diálogo com fundo escurecido e explica o envio do código;
+- o cliente solicita o código e informa os seis dígitos recebidos;
+- o sistema valida o código e libera as alterações por 15 minutos;
+- o cliente confirma a ação solicitada.
+
+O código deve expirar conforme a configuração de expiração de OTP, ser de uso único, aceitar no máximo cinco tentativas e ser protegido por rate limiting. A sessão de alteração deve expirar após 15 minutos e estar vinculada ao e-mail validado.
+
+Após buscar pelo e-mail, o cliente poderá:
 
 ```text
 visualizar seus agendamentos futuros ativos
 cancelar um agendamento com mais de uma hora de antecedência
 ```
 
-O servidor deve validar o limite no momento do cancelamento. A uma hora ou menos do início do atendimento, o cancelamento online é bloqueado e a interface recomenda contato direto com a barbearia. A ação registra o cancelamento, libera o horário, remove o evento do Calendar, preserva o histórico e envia aviso por e-mail ao cliente e ao barbeiro.
+O servidor deve validar a sessão de alteração e o limite no momento do cancelamento. A uma hora ou menos do início do atendimento, o cancelamento online é bloqueado e a interface recomenda contato direto com a barbearia. A ação registra o cancelamento, libera o horário, remove o evento do Calendar, preserva o histórico e envia aviso por e-mail ao cliente e ao barbeiro.
 
 Links seguros de consulta enviados anteriormente continuam válidos e obedecem ao mesmo limite de cancelamento.
 

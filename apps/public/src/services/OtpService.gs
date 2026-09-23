@@ -59,45 +59,20 @@ function verifyEmailVerification_(payload) {
   return { verified: true, clientId: client.id, verificationToken: verificationToken };
 }
 
-function appointmentLookupIdentifier_(value) {
-  var raw = requireText_(value, 'contato', 4, 254);
-  if (raw.indexOf('@') >= 0) {
-    var email = normalizeEmail_(raw);
-    if (!isValidEmail_(email)) throwAppError_('INVALID_LOOKUP_IDENTIFIER', 'Informe um e-mail válido ou um telefone cadastrado.');
-    return { type: 'email', value: email };
-  }
-  var phone = normalizePhone_(raw);
-  if (!isValidPhone_(phone)) throwAppError_('INVALID_LOOKUP_IDENTIFIER', 'Informe um e-mail válido ou um telefone cadastrado.');
-  return { type: 'phone', value: phone };
+function appointmentMutationEmail_(value) {
+  var email = normalizeEmail_(requireText_(value, 'e-mail', 4, 254));
+  if (!isValidEmail_(email)) throwAppError_('INVALID_LOOKUP_EMAIL', 'Informe um e-mail válido.');
+  return email;
 }
 
-function appointmentLookupIdentifierHash_(identifier) {
-  return hashWithSecret_('APPOINTMENT_LOOKUP|' + identifier.type + '|' + identifier.value);
+function appointmentMutationIdentifierHash_(email) {
+  return hashWithSecret_('APPOINTMENT_MUTATION|' + email);
 }
 
-function appointmentLookupClients_(identifier) {
-  return getSheetRecords_(BARBER_BOOKING.sheets.CLIENTS).filter(function(client) {
-    return identifier.type === 'email'
-      ? normalizeEmail_(client.email) === identifier.value
-      : normalizePhone_(client.phone) === identifier.value;
-  });
-}
-
-function appointmentLookupDeliveryEmail_(identifier, clients) {
-  if (!clients.length) return '';
-  if (identifier.type === 'email') return identifier.value;
-  var emails = [];
-  clients.forEach(function(client) {
-    var email = normalizeEmail_(client.email);
-    if (isValidEmail_(email) && emails.indexOf(email) < 0) emails.push(email);
-  });
-  return emails.length === 1 ? emails[0] : '';
-}
-
-function createAppointmentLookupOtp_(identifier) {
-  var identifierHash = appointmentLookupIdentifierHash_(identifier);
+function createAppointmentMutationOtp_(email) {
+  var identifierHash = appointmentMutationIdentifierHash_(email);
   getSheetRecords_(BARBER_BOOKING.sheets.OTP_CODES).forEach(function(record) {
-    if (record.purpose !== 'APPOINTMENT_LOOKUP' || record.identifierHash !== identifierHash || !record.verificationTokenHash) return;
+    if (record.purpose !== 'APPOINTMENT_MUTATION' || record.identifierHash !== identifierHash || !record.verificationTokenHash) return;
     record.verificationTokenHash = '';
     record.verificationTokenExpiresAt = '';
     updateSheetRecord_(BARBER_BOOKING.sheets.OTP_CODES, record);
@@ -109,7 +84,7 @@ function createAppointmentLookupOtp_(identifier) {
     id: generateId_('OTP'),
     identifierHash: identifierHash,
     codeHash: hashWithSecret_(code),
-    purpose: 'APPOINTMENT_LOOKUP',
+    purpose: 'APPOINTMENT_MUTATION',
     expiresAt: expiresAt.toISOString(),
     usedAt: '',
     attempts: 0,
@@ -118,85 +93,89 @@ function createAppointmentLookupOtp_(identifier) {
     appointmentId: '',
     createdAt: now_().toISOString()
   });
-  return { code: code };
+  return { code: code, expiresAt: expiresAt };
 }
 
-function requestAppointmentLookupOtp_(value) {
-  var identifier = appointmentLookupIdentifier_(value);
-  checkRateLimit_(identifier.type + '|' + identifier.value, 'appointment_lookup_request');
+function requestAppointmentMutationOtp_(payload) {
+  var data = parsePayload_(payload);
+  var email = appointmentMutationEmail_(data.email);
+  var appointmentId = requireText_(data.appointmentId, 'agendamento', 4, 100);
+  checkRateLimit_(email, 'appointment_mutation_request');
   var lock = LockService.getScriptLock();
-  var email = '';
   var otp = null;
   lock.waitLock(30000);
   try {
-    var clients = appointmentLookupClients_(identifier);
-    email = appointmentLookupDeliveryEmail_(identifier, clients);
-    if (email) otp = createAppointmentLookupOtp_(identifier);
+    var clients = appointmentLookupClientsByEmail_(email);
+    var isListedAppointment = listAppointmentsForLookup_(clients).some(function(item) {
+      return String(item.id) === String(appointmentId);
+    });
+    if (isListedAppointment) otp = createAppointmentMutationOtp_(email);
   } finally {
     lock.releaseLock();
   }
-  if (otp) {
-    try {
-      sendAppointmentLookupOtpEmail_(email, otp);
-    } catch (error) {
-      logTechnicalError_('APPOINTMENT_LOOKUP_OTP_FAILED', error);
-    }
+  if (!otp) return { requested: false };
+  try {
+    sendAppointmentMutationOtpEmail_(email, otp);
+  } catch (error) {
+    logTechnicalError_('APPOINTMENT_MUTATION_OTP_FAILED', error);
+    throwAppError_('EMAIL_SEND_FAILED', 'Não foi possível enviar o código. Tente novamente.');
   }
-  return {
-    requested: true,
-    message: 'Se os dados corresponderem a um cadastro, enviaremos um código ao e-mail associado.'
-  };
+  return { requested: true, expiresAt: otp.expiresAt.toISOString() };
 }
 
-function verifyAppointmentLookupCode_(payload) {
+function verifyAppointmentMutationOtp_(payload) {
   var data = parsePayload_(payload);
-  var identifier = appointmentLookupIdentifier_(data.identifier);
+  var email = appointmentMutationEmail_(data.email);
   var code = trim_(data.code);
-  if (!/^\d{6}$/.test(code)) throwAppError_('INVALID_OTP', 'O código é inválido ou expirou.');
-  checkRateLimit_(identifier.type + '|' + identifier.value, 'appointment_lookup_verify');
-  var identifierHash = appointmentLookupIdentifierHash_(identifier);
+  if (!/^\d{6}$/.test(code)) throwAppError_('INVALID_APPOINTMENT_CODE', 'Informe o código de 6 dígitos recebido por e-mail.');
+  checkRateLimit_(email, 'appointment_mutation_verify');
+  var identifierHash = appointmentMutationIdentifierHash_(email);
   var records = getSheetRecords_(BARBER_BOOKING.sheets.OTP_CODES).filter(function(record) {
-    return record.identifierHash === identifierHash && record.purpose === 'APPOINTMENT_LOOKUP';
+    return record.identifierHash === identifierHash && record.purpose === 'APPOINTMENT_MUTATION';
   }).sort(function(a, b) { return Number(a._rowNumber) - Number(b._rowNumber); });
   var otpRecord = records[records.length - 1];
   if (!otpRecord || otpRecord.usedAt || new Date(otpRecord.expiresAt).getTime() <= now_().getTime()) {
-    throwAppError_('INVALID_OTP', 'O código é inválido ou expirou.');
+    throwAppError_('INVALID_APPOINTMENT_CODE', 'O código é inválido ou expirou. Solicite outro.');
   }
-  if (asInteger_(otpRecord.attempts, 0) >= 5) throwAppError_('INVALID_OTP', 'O código é inválido ou expirou.');
+  if (asInteger_(otpRecord.attempts, 0) >= 5) {
+    throwAppError_('INVALID_APPOINTMENT_CODE', 'Limite de tentativas atingido. Solicite outro código.');
+  }
   otpRecord.attempts = asInteger_(otpRecord.attempts, 0) + 1;
   if (otpRecord.codeHash !== hashWithSecret_(code)) {
     updateSheetRecord_(BARBER_BOOKING.sheets.OTP_CODES, otpRecord);
-    throwAppError_('INVALID_OTP', 'O código é inválido ou expirou.');
+    throwAppError_('INVALID_APPOINTMENT_CODE', 'O código é inválido ou expirou. Confira e tente novamente.');
   }
-  var clients = appointmentLookupClients_(identifier);
-  if (!appointmentLookupDeliveryEmail_(identifier, clients)) {
+  var clients = appointmentLookupClientsByEmail_(email);
+  if (!clients.length) {
     otpRecord.usedAt = now_().toISOString();
     updateSheetRecord_(BARBER_BOOKING.sheets.OTP_CODES, otpRecord);
-    throwAppError_('INVALID_OTP', 'O código é inválido ou expirou.');
+    throwAppError_('INVALID_APPOINTMENT_CODE', 'O código é inválido ou expirou. Solicite outro.');
   }
   otpRecord.usedAt = now_().toISOString();
   var sessionToken = generateToken_();
+  var sessionExpiresAt = new Date(now_().getTime() + 15 * 60 * 1000);
   otpRecord.verificationTokenHash = hashWithSecret_(sessionToken);
-  otpRecord.verificationTokenExpiresAt = new Date(now_().getTime() + 15 * 60 * 1000).toISOString();
+  otpRecord.verificationTokenExpiresAt = sessionExpiresAt.toISOString();
   updateSheetRecord_(BARBER_BOOKING.sheets.OTP_CODES, otpRecord);
-  return { identifier: identifier, sessionToken: sessionToken, clients: clients };
+  return {
+    verified: true,
+    sessionToken: sessionToken,
+    expiresAt: sessionExpiresAt.toISOString()
+  };
 }
 
-function appointmentLookupClientsForSession_(value, sessionToken) {
-  var identifier = appointmentLookupIdentifier_(value);
+function appointmentLookupClientsForMutationSession_(value, sessionToken) {
+  var email = appointmentMutationEmail_(value);
   var normalizedToken = trim_(sessionToken);
   var tokenHash = normalizedToken ? hashWithSecret_(normalizedToken) : '';
-  var identifierHash = appointmentLookupIdentifierHash_(identifier);
+  var identifierHash = appointmentMutationIdentifierHash_(email);
   var isValid = getSheetRecords_(BARBER_BOOKING.sheets.OTP_CODES).some(function(record) {
     return record.identifierHash === identifierHash
-      && record.purpose === 'APPOINTMENT_LOOKUP'
+      && record.purpose === 'APPOINTMENT_MUTATION'
       && Boolean(record.usedAt)
       && record.verificationTokenHash === tokenHash
       && new Date(record.verificationTokenExpiresAt).getTime() > now_().getTime();
   });
-  var clients = appointmentLookupClients_(identifier);
-  if (!isValid || !appointmentLookupDeliveryEmail_(identifier, clients)) {
-    throwAppError_('INVALID_LOOKUP_SESSION', 'Sua validação expirou. Solicite um novo código.');
-  }
-  return clients;
+  if (!isValid) throwAppError_('INVALID_LOOKUP_SESSION', 'Sua confirmação expirou. Valide o e-mail novamente.');
+  return appointmentLookupClientsByEmail_(email);
 }

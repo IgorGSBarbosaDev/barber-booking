@@ -68,26 +68,29 @@ function publicCreateAppointment(payload) {
   });
 }
 
-function publicRequestAppointmentLookupOtp(payload) {
+function publicLookupAppointmentsByEmail(payload) {
   return apiCall_(function() {
     ensureSystemReady_();
     var data = parsePayload_(payload);
-    return requestAppointmentLookupOtp_(data.identifier);
+    var clients = appointmentLookupClientsByEmail_(data.email, 'appointment_lookup');
+    return { appointments: listAppointmentsForLookup_(clients) };
   });
 }
 
-function publicVerifyAppointmentLookup(payload) {
+function publicRequestAppointmentMutationOtp(payload) {
+  return apiCall_(function() {
+    ensureSystemReady_();
+    return requestAppointmentMutationOtp_(payload);
+  });
+}
+
+function publicVerifyAppointmentMutationOtp(payload) {
   return apiCall_(function() {
     ensureSystemReady_();
     var lock = LockService.getScriptLock();
     lock.waitLock(30000);
     try {
-      var session = verifyAppointmentLookupCode_(payload);
-      return {
-        verified: true,
-        sessionToken: session.sessionToken,
-        appointments: listAppointmentsForLookup_(session.clients)
-      };
+      return verifyAppointmentMutationOtp_(payload);
     } finally {
       lock.releaseLock();
     }
@@ -101,7 +104,8 @@ function publicCancelAppointmentByLookup(payload) {
     lock.waitLock(30000);
     try {
       var data = parsePayload_(payload);
-      var clients = appointmentLookupClientsForSession_(data.identifier, data.sessionToken);
+      var clients = appointmentLookupClientsForMutationSession_(data.email, data.sessionToken);
+      checkRateLimit_(normalizeEmail_(data.email), 'appointment_lookup_cancel');
       var appointment = getAppointmentById_(data.appointmentId);
       var belongsToLookup = clients.some(function(client) { return String(client.id) === String(appointment && appointment.clientId); });
       if (!appointment || !belongsToLookup) throwAppError_('APPOINTMENT_NOT_FOUND', 'Agendamento não encontrado.');

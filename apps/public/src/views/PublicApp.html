@@ -185,9 +185,9 @@
     .lookup-heading { display: grid; gap: 8px; margin-bottom: 20px; }
     .lookup-heading p { color: var(--muted); font-size: 13px; }
     .lookup-result { margin-top: 18px; }
-    .lookup-contact-hint { color: var(--muted); font-size: 12px; line-height: 1.55; }
-    .lookup-code-step { display: grid; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
-    .lookup-code-actions { display: flex; flex-direction: column; gap: 9px; }
+    .lookup-search-form { display: grid; gap: 12px; }
+    .lookup-search-form .button { width: 100%; }
+    .lookup-search-form.hidden { display: none; }
     .lookup-results-heading { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; margin-bottom: 12px; }
     .lookup-results-heading h2 { font-size: 19px; letter-spacing: -.035em; }
     .lookup-results-heading p { color: var(--muted); font-size: 12px; }
@@ -242,11 +242,20 @@
     .dialog h2 { font-size: 17px; }
     .dialog p { margin-top: 7px; color: var(--muted); font-size: 13px; }
     .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+    .lookup-verification-backdrop { background: rgba(28,25,23,.72); }
+    .lookup-verification-dialog { width: min(100%, 420px); }
+    .lookup-verification-dialog .dialog-body { display: grid; gap: 12px; padding: 22px; }
+    .lookup-verification-icon { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid var(--border); border-radius: 12px; color: var(--muted-strong); background: var(--surface-subtle); }
+    .lookup-verification-dialog h2 { letter-spacing: -.025em; }
+    .lookup-verification-dialog p { margin: 0; line-height: 1.55; }
+    .lookup-verification-form { display: grid; gap: 12px; margin-top: 4px; }
+    .lookup-verification-form .button, .lookup-verification-secondary { width: 100%; min-height: 46px; }
+    .lookup-verification-actions { display: grid; gap: 8px; margin-top: 2px; }
     @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
     @keyframes dialog-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
     .hidden { display: none !important; }
     @media (max-width: 380px) { .brand-copy strong { max-width: 145px; } .consult-label, .selected-date-long { display: none; } .header-actions .button { width: 44px; padding: 0; } .selected-date-short { display: inline; } .date-picker-row { gap: 7px; } .date-picker-row .meta-line { max-width: 120px; font-size: 11px; } .calendar-popover { padding: 10px; } .calendar-day, .calendar-empty { min-height: 40px; } }
-    @media (min-width: 600px) { .public-shell { padding: 0 20px 48px; } .site-header { min-height: 72px; align-items: center; gap: 18px; } .page { padding-top: 44px; } h1 { font-size: clamp(2rem, 7vw, 3.2rem); } .intro-grid { padding-bottom: 48px; } .service-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } .panel-body { padding: 22px; } .panel-heading { flex-direction: row; align-items: center; gap: 16px; } .selected-service { align-self: auto; } .slot-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .summary-card { padding: 20px; } .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; } .form-actions { flex-direction: row; align-items: center; } .form-actions .button.primary { flex: 1; } .ticket-actions { flex-direction: row; } .lookup .panel-body { padding: 24px; } .lookup-code-actions { flex-direction: row; } .lookup-code-actions .button { width: auto; } .lookup-appointment-card { padding: 18px; } .lookup-appointment-actions { grid-template-columns: auto minmax(0, 1fr); align-items: center; } .lookup-appointment-actions .button { width: auto; } }
+    @media (min-width: 600px) { .public-shell { padding: 0 20px 48px; } .site-header { min-height: 72px; align-items: center; gap: 18px; } .page { padding-top: 44px; } h1 { font-size: clamp(2rem, 7vw, 3.2rem); } .intro-grid { padding-bottom: 48px; } .service-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } .panel-body { padding: 22px; } .panel-heading { flex-direction: row; align-items: center; gap: 16px; } .selected-service { align-self: auto; } .slot-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .summary-card { padding: 20px; } .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; } .form-actions { flex-direction: row; align-items: center; } .form-actions .button.primary { flex: 1; } .ticket-actions { flex-direction: row; } .lookup .panel-body { padding: 24px; } .lookup-appointment-card { padding: 18px; } .lookup-appointment-actions { grid-template-columns: auto minmax(0, 1fr); align-items: center; } .lookup-appointment-actions .button { width: auto; } }
     @media (min-width: 821px) { .service-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } .booking-layout { grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr); margin-top: 26px; } .booking-aside { position: sticky; top: 18px; } .summary-card { order: initial; } }
     @media (max-width: 600px) { h1 { font-size: clamp(2rem, 11vw, 2.75rem); } .form-grid .full { grid-column: auto; } .ticket-actions .button { width: 100%; } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
@@ -266,7 +275,7 @@
     const INITIAL_APPOINTMENT_ID = <?!= JSON.stringify(initialAppointmentId || '') ?>;
     const INITIAL_APPOINTMENT_TOKEN = <?!= JSON.stringify(initialAppointmentToken || '') ?>;
     const PREVIEW_MODE = !(window.google && google.script && google.script.run);
-    const state = { bootstrap:null, page:INITIAL_PAGE, service:null, date:'', calendarMonth:'', calendarOpen:false, slot:null, availability:null, customer:null, emailVerified:false, otpSent:false, appointment:null, appointmentToken:'', legacyAppointmentLink:false, lookupIdentifier:'', lookupOtpSent:false, lookupVerified:false, lookupSessionToken:'', lookupAppointments:[], lookupCancelTargetId:'', lookupNotice:'', lookupNoticeType:'info', dialogAction:null, clientId:storageGet('barber_booking_client_id') || createBrowserId(), browserToken:storageGet('barber_booking_browser_token') || createBrowserId() };
+    const state = { bootstrap:null, page:INITIAL_PAGE, service:null, date:'', calendarMonth:'', calendarOpen:false, slot:null, availability:null, customer:null, emailVerified:false, otpSent:false, appointment:null, appointmentToken:'', legacyAppointmentLink:false, lookupEmail:'', lookupCompleted:false, lookupAppointments:[], lookupCancelTargetId:'', lookupSessionToken:'', lookupSessionExpiresAt:0, lookupActionCodeSent:false, lookupActionBusy:false, lookupActionDialogOpen:false, lookupActionMessage:'', lookupActionMessageType:'info', dialogReturnFocus:null, lookupNotice:'', lookupNoticeType:'info', dialogAction:null, clientId:storageGet('barber_booking_client_id') || createBrowserId(), browserToken:storageGet('barber_booking_browser_token') || createBrowserId() };
     storageSet('barber_booking_client_id', state.clientId); storageSet('barber_booking_browser_token', state.browserToken);
     // Preview-only data: deployed Apps Script HTML Service uses google.script.run instead.
     const MOCK_PUBLIC = { configured:true, barberName:'Ateliê do Corte', services:[{id:'SRV_001',name:'Corte clássico',description:'Acabamento preciso e finalização.',durationMinutes:40,price:40,active:true},{id:'SRV_002',name:'Barba',description:'Toalha quente, desenho e hidratação.',durationMinutes:30,price:25,active:true},{id:'SRV_003',name:'Corte + barba',description:'O cuidado completo em uma sessão.',durationMinutes:60,price:60,active:true}], settings:{BUSINESS_TIMEZONE:'America/Sao_Paulo',BOOKING_ADVANCE_DAYS:60,REQUIRE_EMAIL_VERIFICATION:false} };
@@ -289,8 +298,9 @@
       if (name==='publicGetAvailability') return {ok:true,data:{slots:['09:00','09:40','10:20','13:00','13:40','14:20','15:00','16:00'].map(function(startTime){return {startTime:startTime,endTime:startTime,label:startTime};})}};
       if (name==='publicRequestOtp') return {ok:true,data:{required:false,alreadyVerified:true}};
       if (name==='publicVerifyOtp') return {ok:true,data:{verified:true}};
-      if (name==='publicRequestAppointmentLookupOtp') return {ok:true,data:{requested:true,message:'Se os dados corresponderem a um cadastro, enviaremos um código ao e-mail associado.'}};
-      if (name==='publicVerifyAppointmentLookup') return {ok:true,data:{verified:true,sessionToken:'preview-lookup-token',appointments:[{id:'APT_PREVIEW_LOOKUP',clientName:'João Silva',serviceName:'Corte + barba',servicePrice:60,date:addDays(todayIso(),3),startTime:'14:00',endTime:'15:00',status:'CONFIRMED',canCancel:true}]}};
+      if (name==='publicLookupAppointmentsByEmail') return {ok:true,data:{appointments:[{id:'APT_PREVIEW_LOOKUP',clientName:'João Silva',serviceName:'Corte + barba',servicePrice:60,date:addDays(todayIso(),3),startTime:'14:00',endTime:'15:00',status:'CONFIRMED',canCancel:true}]}};
+      if (name==='publicRequestAppointmentMutationOtp') return {ok:true,data:{requested:true,expiresAt:new Date(Date.now()+10*60*1000).toISOString()}};
+      if (name==='publicVerifyAppointmentMutationOtp') return {ok:true,data:{verified:true,sessionToken:'preview-mutation-token',expiresAt:new Date(Date.now()+15*60*1000).toISOString()}};
       if (name==='publicCancelAppointmentByLookup') return {ok:true,data:{cancelled:Object.assign({},state.lookupAppointments.find(function(item){return item.id===payload.appointmentId;}),{status:'CANCELLED_BY_CLIENT'}),appointments:[]}};
       if (name==='publicCreateAppointment') { const service=MOCK_PUBLIC.services.find(function(item){return item.id===payload.serviceId;})||MOCK_PUBLIC.services[0]; return {ok:true,data:{appointment:{id:'APT_PREVIEW_001',clientName:payload.name,serviceName:service.name,servicePrice:service.price,date:payload.date,startTime:payload.startTime,endTime:payload.endTime,status:'CONFIRMED',paymentStatus:'PENDING',paymentMethod:''},managementToken:'preview-token'}}; }
       if (name==='publicGetAppointment') return {ok:true,data:{id:payload.appointmentId||'APT_PREVIEW_001',clientName:'João Silva',serviceName:'Corte + barba',servicePrice:60,date:addDays(todayIso(),2),startTime:'14:00',endTime:'15:00',status:'CONFIRMED',paymentStatus:'PENDING',paymentMethod:'',canCancel:true}};
@@ -399,90 +409,148 @@
     function confirmationPage() { const appointment=state.appointment;if(!appointment)return homePage();const url=location.href.split('?')[0]+'?page=appointment&id='+encodeURIComponent(appointment.id)+'&token='+encodeURIComponent(state.appointmentToken);return '<div class="page confirmation"><span class="success-mark">'+icon('check',28)+'</span><h1>Agendamento confirmado.</h1><p>Seu horário está reservado. Guarde este link para consultar ou cancelar quando precisar.</p>'+ticket(appointment)+'<div class="ticket-actions"><a class="button secondary" href="'+url+'">'+icon('search',15)+' Consultar agendamento</a><button class="button primary" type="button" onclick="showPage(\'home\')">Novo agendamento '+icon('arrow-right',15)+'</button></div></div>'; }
     function appointmentPage() {
       if (state.legacyAppointmentLink) {
-        return '<div class="page lookup"><section class="panel"><div class="panel-body"><div class="lookup-heading"><span class="eyebrow">Consulta</span><h1 style="font-size:clamp(1.9rem, 6vw, 2.6rem)">Seu agendamento.</h1><p>Este link seguro continua funcionando para o agendamento da confirmação.</p></div><div id="appointment-message" style="margin-top:14px"></div><button class="button secondary" type="button" onclick="useContactLookup()">Consultar outros agendamentos</button></div></section><div id="appointment-result" class="lookup-result"></div></div>';
+        return '<div class=\"page lookup\"><section class=\"panel\"><div class=\"panel-body\"><div class=\"lookup-heading\"><span class=\"eyebrow\">Consulta</span><h1 style=\"font-size:clamp(1.9rem, 6vw, 2.6rem)\">Seu agendamento.</h1><p>Este link seguro continua funcionando para o agendamento da confirmação.</p></div><div id=\"appointment-message\" style=\"margin-top:14px\"></div><button class=\"button secondary\" type=\"button\" onclick=\"useContactLookup()\">Consultar outros agendamentos</button></div></section><div id=\"appointment-result\" class=\"lookup-result\"></div></div>';
       }
-      return '<div class="page lookup"><section class="panel"><div class="panel-body"><div class="lookup-heading"><span class="eyebrow">Consulta</span><h1 style="font-size:clamp(1.9rem, 6vw, 2.6rem)">Encontre seus agendamentos.</h1><p>Informe o e-mail ou telefone usado no cadastro. O código de acesso será enviado ao e-mail associado.</p></div><label class="field"><span class="field-label">E-mail ou telefone</span><input id="appointment-lookup-identifier" type="text" autocomplete="off" placeholder="voce@email.com ou (31) 99999-0000"'+(state.lookupOtpSent?' disabled':'')+'></label><p class="lookup-contact-hint" style="margin-top:8px">Se o telefone estiver ligado a mais de um e-mail, informe o e-mail. Por segurança, só exibimos os agendamentos depois da confirmação do código.</p><div id="appointment-message" style="margin-top:14px"></div><div id="appointment-code-step" class="lookup-code-step'+(state.lookupOtpSent&&!state.lookupVerified?'':' hidden')+'"><label class="field"><span class="field-label">Código de 6 dígitos</span><input id="appointment-lookup-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><p id="appointment-lookup-code-hint" class="lookup-contact-hint">Se os dados corresponderem a um cadastro, enviaremos o código ao e-mail associado.</p><div id="appointment-lookup-verify-message"></div><div class="lookup-code-actions"><button class="button primary" type="button" onclick="verifyAppointmentLookupCode()">Consultar agendamentos '+icon('search',15)+'</button><button class="button secondary" type="button" onclick="requestAppointmentLookupCode(true)">Reenviar código</button><button class="button ghost" type="button" onclick="resetAppointmentLookup()">Alterar contato</button></div></div></div></section><div id="appointment-lookup-results" class="lookup-result">'+appointmentLookupResultsHtml()+'</div></div>';
+      return '<div class=\"page lookup\"><section class=\"panel\"><div class=\"panel-body\"><div class=\"lookup-heading\"><span class=\"eyebrow\">Consulta</span><h1 style=\"font-size:clamp(1.9rem, 6vw, 2.6rem)\">Encontre seus agendamentos.</h1><p>Informe o e-mail usado no cadastro e busque os horários ativos vinculados a ele.</p></div><form id=\"appointment-lookup-form\" class=\"lookup-search-form'+(state.lookupCompleted?' hidden':'')+'\" onsubmit=\"event.preventDefault(); searchAppointmentsByEmail();\"><label class=\"field\"><span class=\"field-label\">E-mail</span><input id=\"appointment-lookup-email\" type=\"email\" autocomplete=\"email\" maxlength=\"254\" required placeholder=\"voce@email.com\" value=\"'+escapeHtml(state.lookupEmail)+'\"></label><button class=\"button primary\" type=\"submit\">Buscar agendamentos '+icon('search',15)+'</button></form><div id=\"appointment-message\" style=\"margin-top:14px\"></div></div></section><div id=\"appointment-lookup-results\" class=\"lookup-result\">'+appointmentLookupResultsHtml()+'</div></div>';
     }
-    async function requestAppointmentLookupCode(resend) {
-      const field=document.getElementById('appointment-lookup-identifier');
-      const identifier=resend?state.lookupIdentifier:(field&&field.value||'').trim();
+    async function searchAppointmentsByEmail() {
+      const field=document.getElementById('appointment-lookup-email');
+      const email=(field&&field.value||'').trim().toLowerCase();
       const message=document.getElementById('appointment-message');
-      if(!identifier){message.innerHTML=alertBox('error','Informe o e-mail ou telefone usado no cadastro.');return;}
-      message.innerHTML='<div class="alert info" role="status"><span class="spinner"></span><span>Enviando o código…</span></div>';
+      const form=document.getElementById('appointment-lookup-form');
+      const button=form&&form.querySelector('button[type=\"submit\"]');
+      if(!email || !/^\S+@\S+\.\S+$/.test(email)){message.innerHTML=alertBox('error','Informe um e-mail válido.');return;}
+      if(button)button.disabled=true;
+      message.innerHTML='<div class=\"alert info\" role=\"status\"><span class=\"spinner\"></span><span>Buscando seus agendamentos…</span></div>';
       try {
-        const response=unwrap(await callServer('publicRequestAppointmentLookupOtp',{identifier:identifier}));
-        state.lookupIdentifier=identifier;
-        state.lookupOtpSent=true;
-        state.lookupVerified=false;
-        state.lookupSessionToken='';
-        state.lookupAppointments=[];
-        if(field)field.disabled=true;
-        const codeStep=document.getElementById('appointment-code-step');
-        if(codeStep)codeStep.classList.remove('hidden');
-        const hint=document.getElementById('appointment-lookup-code-hint');
-        if(hint)hint.textContent=response.message||'Se os dados corresponderem a um cadastro, enviaremos o código ao e-mail associado.';
-        const verifyMessage=document.getElementById('appointment-lookup-verify-message');
-        if(verifyMessage)verifyMessage.innerHTML='';
-        if(resend){const codeField=document.getElementById('appointment-lookup-code');if(codeField)codeField.value='';}
-        message.innerHTML=alertBox('info','Se o cadastro corresponder aos dados informados, enviaremos um código ao e-mail associado. Confira também a caixa de spam.');
-        renderAppointmentLookupResults();
-      } catch(error) {
-        message.innerHTML=alertBox('error',error.message||'Não foi possível solicitar o código.');
-      }
-    }
-    async function verifyAppointmentLookupCode() {
-      const codeField=document.getElementById('appointment-lookup-code');
-      const code=(codeField&&codeField.value||'').trim();
-      const message=document.getElementById('appointment-lookup-verify-message');
-      if(!/^\d{6}$/.test(code)){message.innerHTML=alertBox('error','Informe o código de 6 dígitos recebido por e-mail.');return;}
-      message.innerHTML='<div class="alert info" role="status"><span class="spinner"></span><span>Validando o código…</span></div>';
-      try {
-        const response=unwrap(await callServer('publicVerifyAppointmentLookup',{identifier:state.lookupIdentifier,code:code}));
-        state.lookupVerified=true;
-        state.lookupSessionToken=response.sessionToken;
+        const response=unwrap(await callServer('publicLookupAppointmentsByEmail',{email:email}));
+        state.lookupEmail=email;
+        state.lookupCompleted=true;
         state.lookupAppointments=response.appointments||[];
         state.lookupNotice='';
-        const codeStep=document.getElementById('appointment-code-step');
-        if(codeStep)codeStep.classList.add('hidden');
-        const requestMessage=document.getElementById('appointment-message');
-        if(requestMessage)requestMessage.innerHTML='';
+        if(field)field.disabled=true;
+        if(form)form.classList.add('hidden');
+        message.innerHTML='';
         renderAppointmentLookupResults();
       } catch(error) {
-        message.innerHTML=alertBox('error',error.message||'O código é inválido ou expirou.');
+        message.innerHTML=alertBox('error',error.message||'Não foi possível buscar os agendamentos.');
+      } finally {
+        if(button&&!state.lookupCompleted)button.disabled=false;
       }
     }
     function resetAppointmentLookup() {
-      state.lookupIdentifier='';state.lookupOtpSent=false;state.lookupVerified=false;state.lookupSessionToken='';state.lookupAppointments=[];state.lookupNotice='';
-      const field=document.getElementById('appointment-lookup-identifier');if(field){field.value='';field.disabled=false;}
-      const codeStep=document.getElementById('appointment-code-step');if(codeStep)codeStep.classList.add('hidden');
+      state.lookupEmail='';state.lookupCompleted=false;state.lookupAppointments=[];state.lookupNotice='';state.lookupCancelTargetId='';state.lookupSessionToken='';state.lookupSessionExpiresAt=0;state.lookupActionCodeSent=false;state.lookupActionBusy=false;state.lookupActionDialogOpen=false;state.lookupActionMessage='';
+      const field=document.getElementById('appointment-lookup-email');if(field){field.value='';field.disabled=false;}
+      const form=document.getElementById('appointment-lookup-form');if(form)form.classList.remove('hidden');
       const message=document.getElementById('appointment-message');if(message)message.innerHTML='';
       const results=document.getElementById('appointment-lookup-results');if(results)results.innerHTML='';
       if(field)field.focus();
     }
     function useContactLookup() { state.legacyAppointmentLink=false;state.appointment=null;state.appointmentToken='';state.page='appointment';render(); }
     function appointmentLookupResultsHtml() {
-      if(!state.lookupVerified)return '';
+      if(!state.lookupCompleted)return '';
       const notice=state.lookupNotice?alertBox(state.lookupNoticeType||'info',state.lookupNotice):'';
-      if(!state.lookupAppointments.length)return notice+'<div class="empty-state"><span class="empty-icon">'+icon('calendar',22)+'</span><strong>Você não tem agendamentos ativos futuros.</strong><p>Quando precisar, consulte novamente com o mesmo e-mail ou telefone cadastrado.</p><button class="button secondary" type="button" onclick="resetAppointmentLookup()">Pesquisar outro contato</button></div>';
+      if(!state.lookupAppointments.length)return notice+'<div class=\"empty-state\"><span class=\"empty-icon\">'+icon('calendar',22)+'</span><strong>Nenhum agendamento ativo encontrado.</strong><p>Confira se o e-mail é o mesmo usado no cadastro.</p><button class=\"button secondary\" type=\"button\" onclick=\"resetAppointmentLookup()\">Buscar outro e-mail</button></div>';
       const cards=state.lookupAppointments.map(function(appointment){
         const actions=appointment.canCancel
-          ? '<button class="button danger" type="button" onclick="cancelListedAppointment(\''+escapeHtml(appointment.id)+'\')">Cancelar agendamento</button>'
-          : '<p class="lookup-cancel-guidance">'+escapeHtml(appointment.cancellationMessage||'O cancelamento online não está disponível para este horário. Entre em contato diretamente com a barbearia para verificar as opções.')+'</p>';
-        return '<article class="lookup-appointment-card">'+ticket(appointment)+'<div class="lookup-appointment-actions">'+actions+'</div></article>';
+          ? '<button class=\"button danger\" type=\"button\" data-cancel-appointment=\"'+escapeHtml(appointment.id)+'\">Cancelar agendamento</button>'
+          : '<p class=\"lookup-cancel-guidance\">'+escapeHtml(appointment.cancellationMessage||'O cancelamento online não está disponível para este horário. Entre em contato diretamente com a barbearia para verificar as opções.')+'</p>';
+        return '<article class=\"lookup-appointment-card\">'+ticket(appointment)+'<div class=\"lookup-appointment-actions\">'+actions+'</div></article>';
       }).join('');
-      return notice+'<div class="lookup-results-heading"><h2>Agendamentos ativos</h2><p>Escolha um agendamento para consultar ou cancelar.</p></div><div class="lookup-booking-list">'+cards+'</div><div class="form-actions"><button class="button secondary" type="button" onclick="resetAppointmentLookup()">Consultar outro contato</button></div>';
+      return notice+'<div class=\"lookup-results-heading\"><h2>Agendamentos ativos</h2><p>Resultados para '+escapeHtml(state.lookupEmail)+'. Escolha um agendamento para consultar ou cancelar.</p></div><div class=\"lookup-booking-list\">'+cards+'</div><div class=\"form-actions\"><button class=\"button secondary\" type=\"button\" onclick=\"resetAppointmentLookup()\">Buscar outro e-mail</button></div>';
     }
-    function renderAppointmentLookupResults() { const results=document.getElementById('appointment-lookup-results');if(results)results.innerHTML=appointmentLookupResultsHtml(); }
+    function renderAppointmentLookupResults() {
+      const results=document.getElementById('appointment-lookup-results');
+      if(!results)return;
+      results.innerHTML=appointmentLookupResultsHtml();
+      Array.prototype.forEach.call(results.querySelectorAll('[data-cancel-appointment]'),function(button){
+        button.addEventListener('click',function(){cancelListedAppointment(button.getAttribute('data-cancel-appointment'));});
+      });
+    }
+    function hasValidLookupMutationSession() {
+      return Boolean(state.lookupSessionToken&&state.lookupSessionExpiresAt>Date.now());
+    }
     function cancelListedAppointment(appointmentId) {
       const appointment=state.lookupAppointments.find(function(item){return String(item.id)===String(appointmentId);});
       if(!appointment||!appointment.canCancel)return;
       state.lookupCancelTargetId=appointment.id;
+      if(hasValidLookupMutationSession()){openLookupCancellationConfirmation();return;}
+      openAppointmentMutationDialog(appointment.id);
+    }
+    function openAppointmentMutationDialog(appointmentId) {
+      const appointment=state.lookupAppointments.find(function(item){return String(item.id)===String(appointmentId);});
+      if(!appointment)return;
+      state.lookupCancelTargetId=appointment.id;
+      state.lookupActionCodeSent=false;state.lookupActionBusy=false;state.lookupActionMessage='';state.lookupActionMessageType='info';state.lookupActionDialogOpen=true;
+      state.dialogReturnFocus=document.activeElement;
+      document.body.classList.add('modal-open');
+      renderAppointmentMutationDialog();
+      window.setTimeout(function(){const button=document.getElementById('lookup-action-send');if(button)button.focus();},20);
+    }
+    function renderAppointmentMutationDialog() {
+      const message=state.lookupActionBusy
+        ? '<div class="alert info" role="status"><span class="spinner"></span><span>'+(state.lookupActionCodeSent?'Validando o código…':'Enviando o código…')+'</span></div>'
+        : state.lookupActionMessage?alertBox(state.lookupActionMessageType,state.lookupActionMessage):'';
+      const actionContent=state.lookupActionCodeSent
+        ? '<form class="lookup-verification-form" onsubmit="event.preventDefault();verifyAppointmentMutationCode()"><label class="field"><span class="field-label">Código de 6 dígitos</span><input id="lookup-action-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required placeholder="000000"></label><button class="button primary" type="submit" '+(state.lookupActionBusy?'disabled':'')+'>Validar e continuar '+icon('arrow-right',15)+'</button><div class="lookup-verification-actions"><button class="button secondary" type="button" onclick="requestAppointmentMutationCode()" '+(state.lookupActionBusy?'disabled':'')+'>Reenviar código</button><button class="button ghost lookup-verification-secondary" type="button" onclick="cancelLookupActionVerification()" '+(state.lookupActionBusy?'disabled':'')+'>Agora não</button></div></form>'
+        : '<div class="lookup-verification-actions"><button id="lookup-action-send" class="button primary" type="button" onclick="requestAppointmentMutationCode()" '+(state.lookupActionBusy?'disabled':'')+'>Enviar código '+icon('arrow-right',15)+'</button><button class="button ghost lookup-verification-secondary" type="button" onclick="cancelLookupActionVerification()" '+(state.lookupActionBusy?'disabled':'')+'>Agora não</button></div>';
+      document.getElementById('dialog-region').innerHTML='<div class="dialog-backdrop lookup-verification-backdrop" role="presentation" onclick="if(event.target===this&&!state.lookupActionBusy)cancelLookupActionVerification()"><section class="dialog lookup-verification-dialog" role="dialog" aria-modal="true" aria-labelledby="lookup-verification-title" aria-describedby="lookup-verification-description"><div class="dialog-body"><span class="lookup-verification-icon">'+icon('shield-check',20)+'</span><h2 id="lookup-verification-title">Confirme para continuar</h2><p id="lookup-verification-description">Para cancelar ou alterar um agendamento, confirme que você tem acesso ao e-mail usado na busca. Enviaremos um código de 6 dígitos. A validação libera as alterações por 15 minutos.</p><div id="lookup-action-message" aria-live="polite">'+message+'</div>'+actionContent+'</div></section></div>';
+    }
+    async function requestAppointmentMutationCode() {
+      if(state.lookupActionBusy)return;
+      state.lookupActionBusy=true;state.lookupActionMessage='';
+      renderAppointmentMutationDialog();
+      try {
+        const response=unwrap(await callServer('publicRequestAppointmentMutationOtp',{email:state.lookupEmail,appointmentId:state.lookupCancelTargetId}));
+        if(!response.requested)throw new Error('Não foi possível confirmar este agendamento. Faça uma nova busca pelo e-mail cadastrado.');
+        state.lookupActionCodeSent=true;state.lookupActionBusy=false;
+        state.lookupActionMessage='Enviamos o código ao e-mail vinculado ao cadastro. Confira também a caixa de spam.';
+        state.lookupActionMessageType='info';
+        renderAppointmentMutationDialog();
+        window.setTimeout(function(){const field=document.getElementById('lookup-action-code');if(field)field.focus();},20);
+      } catch(error) {
+        state.lookupActionBusy=false;state.lookupActionMessage=error.message||'Não foi possível enviar o código.';
+        state.lookupActionMessageType='error';
+        renderAppointmentMutationDialog();
+        window.setTimeout(function(){const button=document.getElementById(state.lookupActionCodeSent?'lookup-action-code':'lookup-action-send');if(button)button.focus();},20);
+      }
+    }
+    async function verifyAppointmentMutationCode() {
+      if(state.lookupActionBusy)return;
+      const field=document.getElementById('lookup-action-code');
+      const code=(field&&field.value||'').trim();
+      const message=document.getElementById('lookup-action-message');
+      if(!/^\d{6}$/.test(code)){message.innerHTML=alertBox('error','Informe o código de 6 dígitos recebido por e-mail.');if(field)field.focus();return;}
+      state.lookupActionBusy=true;
+      const button=document.querySelector('.lookup-verification-form button[type="submit"]');
+      if(button)button.disabled=true;
+      message.innerHTML='<div class="alert info" role="status"><span class="spinner"></span><span>Validando o código…</span></div>';
+      try {
+        const response=unwrap(await callServer('publicVerifyAppointmentMutationOtp',{email:state.lookupEmail,appointmentId:state.lookupCancelTargetId,code:code}));
+        if(!response.verified||!response.sessionToken)throw new Error('Não foi possível validar o código. Solicite outro.');
+        state.lookupSessionToken=response.sessionToken;
+        state.lookupSessionExpiresAt=Date.parse(response.expiresAt||'')||0;
+        state.lookupActionBusy=false;state.lookupActionDialogOpen=false;state.lookupActionMessage='';
+        closeDialog();
+        openLookupCancellationConfirmation();
+      } catch(error) {
+        state.lookupActionBusy=false;
+        message.innerHTML=alertBox('error',error.message||'O código é inválido ou expirou.');
+        if(field)field.focus();
+      }
+    }
+    function cancelLookupActionVerification() {
+      if(state.lookupActionBusy)return;
+      state.lookupActionDialogOpen=false;state.lookupActionCodeSent=false;state.lookupActionMessage='';state.lookupCancelTargetId='';
+      closeDialog();
+    }
+    function openLookupCancellationConfirmation() {
       openDialog('Cancelar este agendamento?','O horário será liberado e a barbearia receberá um aviso por e-mail.','Confirmar cancelamento','danger',confirmLookupCancellation);
     }
     async function confirmLookupCancellation() {
       closeDialog();
       try {
-        const response=unwrap(await callServer('publicCancelAppointmentByLookup',{appointmentId:state.lookupCancelTargetId,identifier:state.lookupIdentifier,sessionToken:state.lookupSessionToken}));
+        const response=unwrap(await callServer('publicCancelAppointmentByLookup',{appointmentId:state.lookupCancelTargetId,email:state.lookupEmail,sessionToken:state.lookupSessionToken}));
         state.lookupAppointments=response.appointments||[];
         state.lookupNotice='Agendamento cancelado. A barbearia foi avisada por e-mail.';
         state.lookupNoticeType='success';
@@ -490,6 +558,11 @@
         renderAppointmentLookupResults();
         showToast('success','Agendamento cancelado','A barbearia foi avisada.');
       } catch(error) {
+        if(error.appCode==='INVALID_LOOKUP_SESSION'){
+          state.lookupSessionToken='';state.lookupSessionExpiresAt=0;
+          openAppointmentMutationDialog(state.lookupCancelTargetId);
+          return;
+        }
         if(error.appCode==='CANCELLATION_WINDOW_CLOSED'){
           const appointment=state.lookupAppointments.find(function(item){return String(item.id)===String(state.lookupCancelTargetId);});
           if(appointment){appointment.canCancel=false;appointment.cancellationMessage=error.message;}
@@ -525,8 +598,19 @@
     async function confirmCancelAppointment() { closeDialog();try{const appointment=unwrap(await callServer('publicCancelAppointment',{appointmentId:state.appointment.id,token:state.appointmentToken}));state.appointment=appointment;renderAppointmentResult(appointment);showToast('success','Agendamento cancelado','A barbearia foi avisada por e-mail.');}catch(error){if(error.appCode==='CANCELLATION_WINDOW_CLOSED'){state.appointment.canCancel=false;state.appointment.cancellationMessage=error.message;renderAppointmentResult(state.appointment);}const message=document.getElementById('appointment-message');if(message)message.innerHTML=alertBox('error',error.message);} }
     async function rescheduleAppointment() { const date=document.getElementById('reschedule-date').value;const startTime=document.getElementById('reschedule-time').value;const message=document.getElementById('reschedule-message');if(!date||!startTime){message.innerHTML=alertBox('error','Informe a nova data e o novo horário.');return;}message.innerHTML='<div class="alert info" role="status"><span class="spinner"></span><span>Verificando disponibilidade…</span></div>';try{const result=unwrap(await callServer('publicRescheduleAppointment',{appointmentId:state.appointment.id,token:state.appointmentToken,date:date,startTime:startTime,clientId:state.clientId,browserToken:state.browserToken}));state.appointment=result.appointment;state.appointmentToken=result.managementToken;renderAppointmentResult(result.appointment);showToast('success','Agendamento remarcado','A nova data foi confirmada.');}catch(error){if(error.appCode==='CANCELLATION_WINDOW_CLOSED'){state.appointment.canCancel=false;state.appointment.cancellationMessage=error.message;renderAppointmentResult(state.appointment);}else{message.innerHTML=alertBox('error',error.message||'Escolha outro horário.','Não foi possível remarcar:');}} }
     function showToast(type,title,message) { const region=document.getElementById('toast-region');const item=document.createElement('div');item.className='toast '+type;item.innerHTML='<span class="toast-icon">'+icon(type==='success'?'check-circle':type==='error'?'alert-circle':'info',17)+'</span><span class="toast-copy"><strong>'+escapeHtml(title)+'</strong><span>'+escapeHtml(message||'')+'</span></span>';region.appendChild(item);window.setTimeout(function(){item.style.opacity='0';item.style.transform='translateY(6px)';window.setTimeout(function(){item.remove();},220);},4200); }
-    function openDialog(title,message,confirmLabel,tone,action) { state.dialogAction=action;document.body.classList.add('modal-open');document.getElementById('dialog-region').innerHTML='<div class="dialog-backdrop" role="presentation" onclick="if(event.target===this)closeDialog()"><section class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dialog-title"><div class="dialog-body"><h2 id="dialog-title">'+escapeHtml(title)+'</h2><p>'+escapeHtml(message)+'</p><div class="dialog-actions"><button class="button ghost" type="button" onclick="closeDialog()">Voltar</button><button class="button '+(tone==='danger'?'danger':'primary')+'" type="button" onclick="state.dialogAction()">'+escapeHtml(confirmLabel)+'</button></div></div></section></div>';window.setTimeout(function(){const button=document.querySelector('.dialog-actions .button:last-child');if(button)button.focus();},20); }
-    function closeDialog() { document.body.classList.remove('modal-open');document.getElementById('dialog-region').innerHTML='';state.dialogAction=null; }
+    function openDialog(title,message,confirmLabel,tone,action) { state.dialogAction=action;state.dialogReturnFocus=document.activeElement;document.body.classList.add('modal-open');document.getElementById('dialog-region').innerHTML='<div class="dialog-backdrop" role="presentation" onclick="if(event.target===this)closeDialog()"><section class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dialog-title"><div class="dialog-body"><h2 id="dialog-title">'+escapeHtml(title)+'</h2><p>'+escapeHtml(message)+'</p><div class="dialog-actions"><button class="button ghost" type="button" onclick="closeDialog()">Voltar</button><button class="button '+(tone==='danger'?'danger':'primary')+'" type="button" onclick="state.dialogAction()">'+escapeHtml(confirmLabel)+'</button></div></div></section></div>';window.setTimeout(function(){const button=document.querySelector('.dialog-actions .button:last-child');if(button)button.focus();},20); }
+    function closeDialog() { const returnFocus=state.dialogReturnFocus;document.body.classList.remove('modal-open');document.getElementById('dialog-region').innerHTML='';state.dialogAction=null;state.dialogReturnFocus=null;if(returnFocus&&returnFocus.isConnected&&typeof returnFocus.focus==='function')returnFocus.focus(); }
+    document.addEventListener('keydown',function(event){
+      if(!state.lookupActionDialogOpen)return;
+      if(event.key==='Escape'&&!state.lookupActionBusy){cancelLookupActionVerification();return;}
+      if(event.key!=='Tab')return;
+      const modal=document.querySelector('.lookup-verification-dialog');
+      const controls=modal?Array.prototype.slice.call(modal.querySelectorAll('input:not([disabled]),button:not([disabled])')):[];
+      if(!controls.length)return;
+      const first=controls[0],last=controls[controls.length-1];
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+    });
     async function boot() { try{state.bootstrap=unwrap(await callServer('publicGetBootstrap'));document.getElementById('brand-name').textContent=state.bootstrap.barberName||'Barber Booking';if(state.page==='appointment'){state.legacyAppointmentLink=Boolean(INITIAL_APPOINTMENT_ID&&INITIAL_APPOINTMENT_TOKEN);render();if(state.legacyAppointmentLink)lookupLegacyAppointment();}else{state.page='home';render();}}catch(error){document.getElementById('app').innerHTML='<div class="page"><div class="alert error" role="alert">'+icon('alert-circle',17)+'<span>Não foi possível carregar o agendamento. Tente novamente.</span></div></div>'; } }
     boot();
   </script>
