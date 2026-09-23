@@ -14,11 +14,20 @@ function normalizeDashboardRange_(payload) {
     return { from: monthStart, to: formatDate_(nextMonth) };
   }
   if (filter === 'custom') {
-    requireDateInRangeForReport_(data.from);
-    requireDateInRangeForReport_(data.to);
-    return { from: trim_(data.from), to: trim_(data.to) };
+    return normalizeReportRange_(data.from, data.to);
   }
   return { from: today, to: today };
+}
+
+function normalizeReportRange_(fromDate, toDate) {
+  var from = trim_(fromDate);
+  var to = trim_(toDate);
+  var fromValue = requireDateInRangeForReport_(from);
+  var toValue = requireDateInRangeForReport_(to);
+  if (fromValue.getTime() > toValue.getTime()) {
+    throwAppError_('INVALID_REPORT_RANGE', 'A data inicial deve ser igual ou anterior à data final.');
+  }
+  return { from: from, to: to };
 }
 
 function requireDateInRangeForReport_(dateString) {
@@ -48,7 +57,8 @@ function buildDashboard_(range, appointments, clients) {
   completed.forEach(function(item) { clientIds[item.clientId] = true; });
   clients = clients || getSheetRecords_(BARBER_BOOKING.sheets.CLIENTS);
   var newClients = clients.filter(function(client) {
-    return clientIds[client.id] && String(client.createdAt || '').slice(0, 10) >= range.from && String(client.createdAt || '').slice(0, 10) <= range.to;
+    var createdDate = normalizeDateValue_(client.createdAt);
+    return clientIds[client.id] && createdDate >= range.from && createdDate <= range.to;
   }).length;
   var days = [];
   var cursor = parseDate_(range.from);

@@ -97,7 +97,7 @@ function formatDateTime_(date) {
 }
 
 function parseDate_(dateString) {
-  var value = trim_(dateString);
+  var value = normalizeDateValue_(dateString);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throwAppError_('INVALID_DATE', 'Data inválida.');
   }
@@ -109,8 +109,8 @@ function parseDate_(dateString) {
 }
 
 function parseDateTime_(dateString, timeString) {
-  var date = trim_(dateString);
-  var time = trim_(timeString);
+  var date = normalizeDateValue_(dateString);
+  var time = normalizeTimeValue_(timeString);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) {
     throwAppError_('INVALID_DATETIME', 'Data ou horário inválido.');
   }
@@ -135,7 +135,7 @@ function dayOfWeek_(dateString) {
 
 function isFutureAppointment_(appointment) {
   try {
-    return parseDateTime_(appointment.date, appointment.startTime).getTime() > now_().getTime();
+    return parseDateTime_(normalizeDateValue_(appointment.date), normalizeTimeValue_(appointment.startTime)).getTime() > now_().getTime();
   } catch (error) {
     return false;
   }

@@ -41,12 +41,9 @@ function adminGetAgenda(payload) {
     requireAdmin_();
     ensureSystemReady_();
     var data = parsePayload_(payload);
-    var from = trim_(data.from || formatDate_(now_()));
-    var to = trim_(data.to || from);
-    requireDateInRangeForReport_(from);
-    requireDateInRangeForReport_(to);
+    var range = normalizeReportRange_(data.from || formatDate_(now_()), data.to || data.from || formatDate_(now_()));
     var clientsById = indexClientsById_(getSheetRecords_(BARBER_BOOKING.sheets.CLIENTS));
-    return getAgendaAppointments_(from, to).map(function(appointment) {
+    return getAgendaAppointments_(range.from, range.to).map(function(appointment) {
       return sanitizeAppointmentForAdmin_(appointment, clientsById);
     });
   });
@@ -204,7 +201,11 @@ function adminGetClientHistory(clientId) {
     var clientsById = indexClientsById_([client]);
     return {
       client: { id: client.id, name: client.name, phone: client.phone, email: client.email, emailVerified: asBoolean_(client.emailVerified) },
-      appointments: getSheetRecords_(BARBER_BOOKING.sheets.APPOINTMENTS).filter(function(item) { return item.clientId === client.id; }).sort(function(a, b) { return String(b.date + b.startTime).localeCompare(String(a.date + a.startTime)); }).map(function(appointment) { return sanitizeAppointmentForAdmin_(appointment, clientsById); })
+      appointments: getSheetRecords_(BARBER_BOOKING.sheets.APPOINTMENTS).filter(function(item) { return item.clientId === client.id; }).sort(function(a, b) {
+        var dateA = normalizeDateValue_(a.date) + ' ' + normalizeTimeValue_(a.startTime);
+        var dateB = normalizeDateValue_(b.date) + ' ' + normalizeTimeValue_(b.startTime);
+        return dateB.localeCompare(dateA);
+      }).map(function(appointment) { return sanitizeAppointmentForAdmin_(appointment, clientsById); })
     };
   });
 }

@@ -25,7 +25,7 @@ function getAvailability_(dateString, serviceId) {
   if (duration <= 0) throwAppError_('SERVICE_INVALID', 'O serviço possui duração inválida.');
   var slotInterval = Math.max(5, asInteger_(getSetting_('SLOT_INTERVAL_MINUTES', 30), 30));
   var appointments = getSheetRecords_(BARBER_BOOKING.sheets.APPOINTMENTS).filter(function(appointment) {
-    return String(appointment.date) === dateString && BARBER_BOOKING.activeAppointmentStatuses.indexOf(String(appointment.status)) >= 0;
+    return normalizeDateValue_(appointment.date) === dateString && BARBER_BOOKING.activeAppointmentStatuses.indexOf(String(appointment.status)) >= 0;
   });
   var blocks = getBlocksForDate_(dateString);
   var earliest = new Date(now_().getTime() + asInteger_(getSetting_('MIN_BOOKING_ADVANCE_MINUTES', 30), 30) * 60 * 1000);
@@ -81,9 +81,9 @@ function isTimeWindowAvailable_(dateString, startTime, durationMinutes, ignoredA
   })) return false;
   return getSheetRecords_(BARBER_BOOKING.sheets.APPOINTMENTS).some(function(appointment) {
     if (String(appointment.id) === String(ignoredAppointmentId || '')) return false;
-    if (String(appointment.date) !== dateString || BARBER_BOOKING.activeAppointmentStatuses.indexOf(String(appointment.status)) < 0) return false;
-    var appointmentStart = parseDateTime_(dateString, appointment.startTime);
-    var appointmentEnd = parseDateTime_(dateString, appointment.endTime);
+    if (normalizeDateValue_(appointment.date) !== dateString || BARBER_BOOKING.activeAppointmentStatuses.indexOf(String(appointment.status)) < 0) return false;
+    var appointmentStart = parseDateTime_(dateString, normalizeTimeValue_(appointment.startTime));
+    var appointmentEnd = parseDateTime_(dateString, normalizeTimeValue_(appointment.endTime));
     return start.getTime() < appointmentEnd.getTime() && end.getTime() > appointmentStart.getTime();
   }) === false;
 }

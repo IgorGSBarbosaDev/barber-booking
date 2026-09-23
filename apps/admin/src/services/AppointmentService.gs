@@ -180,9 +180,9 @@ function sanitizeAppointmentForAdmin_(appointment, clientsById) {
     serviceId: appointment.serviceId,
     serviceName: appointment.serviceNameSnapshot,
     servicePrice: roundMoney_(appointment.servicePriceSnapshot),
-    date: appointment.date,
-    startTime: appointment.startTime,
-    endTime: appointment.endTime,
+    date: normalizeDateValue_(appointment.date),
+    startTime: normalizeTimeValue_(appointment.startTime),
+    endTime: normalizeTimeValue_(appointment.endTime),
     status: appointment.status,
     paymentStatus: appointment.paymentStatus || BARBER_BOOKING.paymentStatuses.PENDING,
     paymentMethod: appointment.paymentMethod || '',
@@ -221,8 +221,14 @@ function cancelAppointmentRecord_(appointment, status, cancelledBy) {
 function getAgendaAppointments_(fromDate, toDate) {
   var from = parseDate_(fromDate).getTime();
   var to = parseDate_(toDate).getTime();
-  return getSheetRecords_(BARBER_BOOKING.sheets.APPOINTMENTS).filter(function(appointment) {
-    var dateTime = parseDate_(String(appointment.date)).getTime();
+  var appointments = getSheetRecords_(BARBER_BOOKING.sheets.APPOINTMENTS);
+  appointments.forEach(function(appointment) {
+    appointment.date = normalizeDateValue_(appointment.date);
+    appointment.startTime = normalizeTimeValue_(appointment.startTime);
+    appointment.endTime = normalizeTimeValue_(appointment.endTime);
+  });
+  return appointments.filter(function(appointment) {
+    var dateTime = parseDate_(appointment.date).getTime();
     return dateTime >= from && dateTime <= to;
   }).sort(function(a, b) {
     return parseDateTime_(a.date, a.startTime).getTime() - parseDateTime_(b.date, b.startTime).getTime();

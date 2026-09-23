@@ -231,7 +231,7 @@ function listClients_(query) {
       phone: client.phone,
       email: client.email,
       emailVerified: asBoolean_(client.emailVerified),
-      createdAt: client.createdAt,
+      createdAt: normalizeDateTimeValue_(client.createdAt),
       appointmentsCount: clientAppointments.length,
       completedCount: clientAppointments.filter(function(item) { return item.status === BARBER_BOOKING.statuses.COMPLETED; }).length
     };
