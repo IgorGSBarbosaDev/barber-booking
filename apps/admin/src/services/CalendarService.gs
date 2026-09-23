@@ -1,12 +1,12 @@
 function appointmentCalendarTitle_(appointment, client) {
   var barberName = getSetting_('BARBER_NAME', 'Barbearia');
-  return '[' + barberName + '] ' + String(client.name || 'Cliente') + ' — ' + String(appointment.serviceNameSnapshot || 'Serviço');
+  return '[' + barberName + '] ' + String(appointment.clientNameSnapshot || client.name || 'Cliente') + ' — ' + String(appointment.serviceNameSnapshot || 'Serviço');
 }
 
 function appointmentCalendarDescription_(appointment, client) {
   return [
     'Agendamento: ' + appointment.id,
-    'Cliente: ' + client.name,
+    'Cliente: ' + (appointment.clientNameSnapshot || client.name),
     'Telefone: ' + client.phone,
     'E-mail: ' + client.email,
     'Serviço: ' + appointment.serviceNameSnapshot,

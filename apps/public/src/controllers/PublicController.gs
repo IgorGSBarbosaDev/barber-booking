@@ -68,6 +68,56 @@ function publicCreateAppointment(payload) {
   });
 }
 
+function publicRequestAppointmentLookupOtp(payload) {
+  return apiCall_(function() {
+    ensureSystemReady_();
+    var data = parsePayload_(payload);
+    return requestAppointmentLookupOtp_(data.identifier);
+  });
+}
+
+function publicVerifyAppointmentLookup(payload) {
+  return apiCall_(function() {
+    ensureSystemReady_();
+    var lock = LockService.getScriptLock();
+    lock.waitLock(30000);
+    try {
+      var session = verifyAppointmentLookupCode_(payload);
+      return {
+        verified: true,
+        sessionToken: session.sessionToken,
+        appointments: listAppointmentsForLookup_(session.clients)
+      };
+    } finally {
+      lock.releaseLock();
+    }
+  });
+}
+
+function publicCancelAppointmentByLookup(payload) {
+  return apiCall_(function() {
+    ensureSystemReady_();
+    var lock = LockService.getScriptLock();
+    lock.waitLock(30000);
+    try {
+      var data = parsePayload_(payload);
+      var clients = appointmentLookupClientsForSession_(data.identifier, data.sessionToken);
+      var appointment = getAppointmentById_(data.appointmentId);
+      var belongsToLookup = clients.some(function(client) { return String(client.id) === String(appointment && appointment.clientId); });
+      if (!appointment || !belongsToLookup) throwAppError_('APPOINTMENT_NOT_FOUND', 'Agendamento não encontrado.');
+      assertClientCancellationAllowed_(appointment);
+      var cancelled = cancelAppointmentRecord_(appointment, BARBER_BOOKING.statuses.CANCELLED_BY_CLIENT, 'CLIENTE');
+      var client = getClientById_(cancelled.clientId) || { name: '' };
+      return {
+        cancelled: sanitizeAppointmentForClient_(cancelled, client),
+        appointments: listAppointmentsForLookup_(clients)
+      };
+    } finally {
+      lock.releaseLock();
+    }
+  });
+}
+
 function publicGetAppointment(payload) {
   return apiCall_(function() {
     ensureSystemReady_();
@@ -88,9 +138,7 @@ function publicCancelAppointment(payload) {
       var data = parsePayload_(payload);
       var appointment = getAppointmentById_(data.appointmentId || data.id);
       verifyManagementToken_(appointment, data.token);
-      if (appointment.status === BARBER_BOOKING.statuses.COMPLETED) {
-        throwAppError_('APPOINTMENT_ALREADY_COMPLETED', 'Atendimentos concluídos não podem ser cancelados.');
-      }
+      assertClientCancellationAllowed_(appointment);
       var cancelled = cancelAppointmentRecord_(appointment, BARBER_BOOKING.statuses.CANCELLED_BY_CLIENT, 'CLIENTE');
       var client = getClientById_(cancelled.clientId) || { name: '' };
       return sanitizeAppointmentForClient_(cancelled, client);
@@ -112,6 +160,7 @@ function publicRescheduleAppointment(payload) {
       if (oldAppointment.status !== BARBER_BOOKING.statuses.CONFIRMED && oldAppointment.status !== BARBER_BOOKING.statuses.PENDING) {
         throwAppError_('APPOINTMENT_NOT_RESCHEDULABLE', 'Este agendamento não pode ser remarcado.');
       }
+      assertClientCancellationAllowed_(oldAppointment);
       var client = getClientById_(oldAppointment.clientId);
       if (!client) throwAppError_('CLIENT_NOT_FOUND', 'Cliente não encontrado.');
       var serviceId = trim_(data.serviceId || oldAppointment.serviceId);
@@ -121,7 +170,7 @@ function publicRescheduleAppointment(payload) {
       }
       oldAppointment = cancelAppointmentRecord_(oldAppointment, BARBER_BOOKING.statuses.CANCELLED_BY_CLIENT, 'CLIENTE_REAGENDAMENTO');
       var customer = {
-        name: client.name,
+        name: oldAppointment.clientNameSnapshot || client.name,
         phone: client.phone,
         email: client.email,
         clientId: trim_(data.clientId || 'reschedule'),

@@ -72,6 +72,7 @@ function buildAppointmentRecord_(data, client, service, managementToken, status)
   return {
     id: generateId_('APT'),
     clientId: client.id,
+    clientNameSnapshot: trim_(data.clientNameSnapshot || client.name),
     serviceId: service.id,
     serviceNameSnapshot: service.name,
     servicePriceSnapshot: roundMoney_(service.price),
@@ -107,6 +108,7 @@ function createAppointmentTransactional_(data, customer, options) {
     }
     data.endTime = formatTime_(addMinutes_(parseDateTime_(data.date, data.startTime), asInteger_(service.durationMinutes, 0)));
     var client = options.client ? options.client : findOrCreateClient_(customer);
+    data.clientNameSnapshot = trim_(customer.name || client.name);
     if (!options.skipLimit) assertClientAppointmentLimit_(client);
     var managementToken = generateToken_();
     var appointment = buildAppointmentRecord_(data, client, service, managementToken, BARBER_BOOKING.statuses.CONFIRMED);
@@ -149,7 +151,7 @@ function createAppointmentTransactional_(data, customer, options) {
 function sanitizeAppointmentForClient_(appointment, client) {
   return {
     id: appointment.id,
-    clientName: client.name,
+    clientName: trim_(appointment.clientNameSnapshot || client.name),
     serviceName: appointment.serviceNameSnapshot,
     servicePrice: roundMoney_(appointment.servicePriceSnapshot),
     date: normalizeDateValue_(appointment.date),
@@ -161,8 +163,50 @@ function sanitizeAppointmentForClient_(appointment, client) {
     calendarSyncStatus: appointment.calendarSyncStatus,
     notificationStatus: appointment.notificationStatus,
     createdAt: normalizeDateTimeValue_(appointment.createdAt),
-    cancelledAt: appointment.cancelledAt || ''
+    cancelledAt: appointment.cancelledAt || '',
+    canCancel: isAppointmentCancelableByClient_(appointment),
+    cancellationMessage: getAppointmentCancellationMessage_(appointment)
   };
+}
+
+function listAppointmentsForLookup_(clients) {
+  var clientsById = {};
+  clients.forEach(function(client) { clientsById[String(client.id)] = client; });
+  return getSheetRecords_(BARBER_BOOKING.sheets.APPOINTMENTS).filter(function(appointment) {
+    return Boolean(clientsById[String(appointment.clientId)])
+      && BARBER_BOOKING.activeAppointmentStatuses.indexOf(String(appointment.status)) >= 0
+      && isFutureAppointment_(appointment);
+  }).sort(function(a, b) {
+    return parseDateTime_(a.date, a.startTime).getTime() - parseDateTime_(b.date, b.startTime).getTime();
+  }).map(function(appointment) {
+    return sanitizeAppointmentForClient_(appointment, clientsById[String(appointment.clientId)]);
+  });
+}
+
+function isAppointmentCancelableByClient_(appointment) {
+  if (!appointment || BARBER_BOOKING.activeAppointmentStatuses.indexOf(String(appointment.status)) < 0) return false;
+  try {
+    var minutesUntilAppointment = (parseDateTime_(appointment.date, appointment.startTime).getTime() - now_().getTime()) / 60000;
+    return minutesUntilAppointment > 60;
+  } catch (error) {
+    return false;
+  }
+}
+
+function getAppointmentCancellationMessage_(appointment) {
+  if (!appointment || BARBER_BOOKING.activeAppointmentStatuses.indexOf(String(appointment.status)) < 0) return '';
+  if (isAppointmentCancelableByClient_(appointment)) return '';
+  return 'O cancelamento online só pode ser feito com mais de uma hora de antecedência. Para este horário, entre em contato diretamente com a barbearia para verificar as opções.';
+}
+
+function assertClientCancellationAllowed_(appointment) {
+  if (!appointment) throwAppError_('APPOINTMENT_NOT_FOUND', 'Agendamento não encontrado.');
+  if (BARBER_BOOKING.activeAppointmentStatuses.indexOf(String(appointment.status)) < 0) {
+    throwAppError_('APPOINTMENT_NOT_CANCELLABLE', 'Este agendamento não pode mais ser cancelado.');
+  }
+  if (!isAppointmentCancelableByClient_(appointment)) {
+    throwAppError_('CANCELLATION_WINDOW_CLOSED', getAppointmentCancellationMessage_(appointment));
+  }
 }
 
 function sanitizeAppointmentForAdmin_(appointment) {
@@ -170,7 +214,7 @@ function sanitizeAppointmentForAdmin_(appointment) {
   return {
     id: appointment.id,
     clientId: appointment.clientId,
-    clientName: client.name,
+    clientName: trim_(appointment.clientNameSnapshot || client.name),
     clientPhone: client.phone,
     clientEmail: client.email,
     serviceId: appointment.serviceId,

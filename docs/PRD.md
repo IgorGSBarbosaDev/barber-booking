@@ -325,7 +325,7 @@ Esse valor deverá ser configurável.
 
 ## Verificação
 
-O primeiro agendamento poderá exigir código enviado por e-mail.
+O primeiro agendamento poderá exigir código enviado por e-mail. A consulta de agendamentos também exige um código enviado ao e-mail cadastrado, mesmo quando o cliente informa o telefone.
 
 Código:
 
@@ -334,6 +334,8 @@ Código:
 expiração curta
 uso único
 ```
+
+Ao consultar agendamentos, o cliente informa o e-mail ou telefone cadastrado. Se um telefone estiver associado a mais de um e-mail, a consulta deve ser feita pelo e-mail. A resposta antes da validação não deve revelar se o cadastro existe.
 
 ## Rate limiting básico
 
@@ -401,14 +403,18 @@ O registro histórico deve permanecer.
 
 # 12. Cancelamento pelo cliente
 
-O cliente receberá um identificador seguro/token referente ao agendamento.
+O cliente poderá informar o e-mail ou telefone cadastrado para localizar seus agendamentos futuros ativos (`PENDING` ou `CONFIRMED`). Antes de exibir resultados, o sistema envia um código de uso único ao e-mail associado ao cadastro. Um telefone associado a mais de um e-mail deve ser consultado pelo e-mail. O cliente pode localizar vários agendamentos feitos com o mesmo contato, inclusive quando foram marcados para outra pessoa.
 
-Através dele poderá:
+Após validar o código, o cliente poderá:
 
 ```text
-visualizar agendamento
-cancelar
+visualizar seus agendamentos futuros ativos
+cancelar um agendamento com mais de uma hora de antecedência
 ```
+
+O servidor deve validar o limite no momento do cancelamento. A uma hora ou menos do início do atendimento, o cancelamento online é bloqueado e a interface recomenda contato direto com a barbearia. A ação registra o cancelamento, libera o horário, remove o evento do Calendar, preserva o histórico e envia aviso por e-mail ao cliente e ao barbeiro.
+
+Links seguros de consulta enviados anteriormente continuam válidos e obedecem ao mesmo limite de cancelamento.
 
 Remarcação poderá ser implementada como:
 
@@ -479,6 +485,8 @@ R$ 60
 ```
 
 Também deve receber link para consultar/cancelar o agendamento.
+
+Quando o cliente cancelar, o barbeiro também recebe um e-mail informando o serviço, a data, o horário e o nome da pessoa atendida.
 
 WhatsApp NÃO faz parte da V1.
 
@@ -640,6 +648,7 @@ updatedAt
 ```text
 id
 clientId
+clientNameSnapshot
 serviceId
 serviceNameSnapshot
 servicePriceSnapshot

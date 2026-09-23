@@ -14,9 +14,9 @@ id, name, description, durationMinutes, price, active, createdAt, updatedAt
 
 ### APPOINTMENTS
 
-id, clientId, serviceId, serviceNameSnapshot, servicePriceSnapshot, date, startTime, endTime, status, paymentStatus, paymentMethod, calendarEventId, managementTokenHash, rescheduledFromId, rescheduledToId, calendarSyncStatus, notificationStatus, createdAt, updatedAt, cancelledAt
+id, clientId, clientNameSnapshot, serviceId, serviceNameSnapshot, servicePriceSnapshot, date, startTime, endTime, status, paymentStatus, paymentMethod, calendarEventId, managementTokenHash, rescheduledFromId, rescheduledToId, calendarSyncStatus, notificationStatus, createdAt, updatedAt, cancelledAt
 
-Os campos serviceNameSnapshot e servicePriceSnapshot preservam o histórico mesmo que o serviço seja alterado. managementTokenHash permite consulta/cancelamento sem armazenar o token em texto puro.
+Os campos clientNameSnapshot, serviceNameSnapshot e servicePriceSnapshot preservam os dados daquela reserva mesmo que o cadastro do cliente ou o serviço seja alterado. managementTokenHash permite consulta/cancelamento sem armazenar o token em texto puro.
 
 ### WORK_SCHEDULE
 

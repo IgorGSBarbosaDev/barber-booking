@@ -1,5 +1,5 @@
 var BARBER_BOOKING = {
-  schemaVersion: '2',
+  schemaVersion: '3',
   timezone: 'America/Sao_Paulo',
   sheets: {
     CLIENTS: 'CLIENTS',
@@ -30,7 +30,7 @@ var BARBER_BOOKING = {
     CLIENTS: ['id', 'name', 'phone', 'email', 'emailVerified', 'identityHash', 'createdAt', 'updatedAt'],
     SERVICES: ['id', 'name', 'description', 'durationMinutes', 'price', 'active', 'createdAt', 'updatedAt'],
     APPOINTMENTS: [
-      'id', 'clientId', 'serviceId', 'serviceNameSnapshot', 'servicePriceSnapshot',
+      'id', 'clientId', 'clientNameSnapshot', 'serviceId', 'serviceNameSnapshot', 'servicePriceSnapshot',
       'date', 'startTime', 'endTime', 'status', 'paymentStatus', 'paymentMethod',
       'calendarEventId', 'managementTokenHash', 'rescheduledFromId', 'rescheduledToId',
       'calendarSyncStatus', 'notificationStatus', 'createdAt', 'updatedAt', 'cancelledAt'

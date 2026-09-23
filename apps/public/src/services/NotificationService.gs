@@ -16,7 +16,7 @@ function sendEmail_(recipient, subject, plainBody, htmlBody) {
 
 function appointmentEmailData_(appointment, client) {
   return {
-    clientName: client.name,
+    clientName: appointment.clientNameSnapshot || client.name,
     clientEmail: client.email,
     serviceName: appointment.serviceNameSnapshot,
     price: formatCurrency_(appointment.servicePriceSnapshot),
@@ -77,6 +77,7 @@ function sendAppointmentCancellationNotification_(appointment, client, cancelled
   var body = [
     'Agendamento cancelado',
     '',
+    'Cliente: ' + data.clientName,
     data.date + ' às ' + data.startTime,
     data.serviceName,
     'Cancelado por: ' + cancelledBy
@@ -106,4 +107,15 @@ function sendOtpEmail_(customer, otp) {
     'Se você não solicitou um agendamento, ignore este e-mail.'
   ].join('\n');
   sendEmail_(customer.email, subject, body);
+}
+
+function sendAppointmentLookupOtpEmail_(email, otp) {
+  var subject = 'Código para consultar seus agendamentos';
+  var body = [
+    'Seu código para consultar os agendamentos é: ' + otp.code,
+    '',
+    'Ele expira em ' + asInteger_(getSetting_('OTP_EXPIRATION_MINUTES', 10), 10) + ' minutos.',
+    'Se você não solicitou essa consulta, ignore este e-mail.'
+  ].join('\n');
+  sendEmail_(email, subject, body);
 }

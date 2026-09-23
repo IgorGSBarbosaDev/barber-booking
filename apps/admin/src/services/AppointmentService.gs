@@ -72,6 +72,7 @@ function buildAppointmentRecord_(data, client, service, managementToken, status)
   return {
     id: generateId_('APT'),
     clientId: client.id,
+    clientNameSnapshot: trim_(data.clientNameSnapshot || client.name),
     serviceId: service.id,
     serviceNameSnapshot: service.name,
     servicePriceSnapshot: roundMoney_(service.price),
@@ -107,6 +108,7 @@ function createAppointmentTransactional_(data, customer, options) {
     }
     data.endTime = formatTime_(addMinutes_(parseDateTime_(data.date, data.startTime), asInteger_(service.durationMinutes, 0)));
     var client = options.client ? options.client : findOrCreateClient_(customer);
+    data.clientNameSnapshot = trim_(customer.name || client.name);
     if (!options.skipLimit) assertClientAppointmentLimit_(client);
     var managementToken = generateToken_();
     var appointment = buildAppointmentRecord_(data, client, service, managementToken, BARBER_BOOKING.statuses.CONFIRMED);
@@ -149,7 +151,7 @@ function createAppointmentTransactional_(data, customer, options) {
 function sanitizeAppointmentForClient_(appointment, client) {
   return {
     id: appointment.id,
-    clientName: client.name,
+    clientName: trim_(appointment.clientNameSnapshot || client.name),
     serviceName: appointment.serviceNameSnapshot,
     servicePrice: roundMoney_(appointment.servicePriceSnapshot),
     date: normalizeDateValue_(appointment.date),
@@ -172,7 +174,7 @@ function sanitizeAppointmentForAdmin_(appointment, clientsById) {
   return {
     id: appointment.id,
     clientId: appointment.clientId,
-    clientName: client.name,
+    clientName: trim_(appointment.clientNameSnapshot || client.name),
     clientPhone: client.phone,
     clientEmail: client.email,
     serviceId: appointment.serviceId,

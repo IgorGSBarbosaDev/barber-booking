@@ -16,7 +16,7 @@ function sendEmail_(recipient, subject, plainBody, htmlBody) {
 
 function appointmentEmailData_(appointment, client) {
   return {
-    clientName: client.name,
+    clientName: appointment.clientNameSnapshot || client.name,
     clientEmail: client.email,
     serviceName: appointment.serviceNameSnapshot,
     price: formatCurrency_(appointment.servicePriceSnapshot),
@@ -77,6 +77,7 @@ function sendAppointmentCancellationNotification_(appointment, client, cancelled
   var body = [
     'Agendamento cancelado',
     '',
+    'Cliente: ' + data.clientName,
     data.date + ' às ' + data.startTime,
     data.serviceName,
     'Cancelado por: ' + cancelledBy

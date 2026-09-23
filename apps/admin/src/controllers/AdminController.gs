@@ -175,7 +175,7 @@ function adminRescheduleAppointment(payload) {
         endTime: formatTime_(addMinutes_(parseDateTime_(date, startTime), asInteger_(service.durationMinutes, 0))),
         serviceId: service.id,
         rescheduledFromId: oldAppointment.id
-      }, { name: client.name, phone: client.phone, email: client.email, clientId: 'admin-reschedule', browserToken: 'admin-reschedule' }, { client: client, skipLimit: true, ignoredAppointmentId: oldAppointment.id, lockHeld: true });
+      }, { name: oldAppointment.clientNameSnapshot || client.name, phone: client.phone, email: client.email, clientId: 'admin-reschedule', browserToken: 'admin-reschedule' }, { client: client, skipLimit: true, ignoredAppointmentId: oldAppointment.id, lockHeld: true });
       oldAppointment.rescheduledToId = result.appointment.id;
       oldAppointment.updatedAt = now_().toISOString();
       updateSheetRecord_(BARBER_BOOKING.sheets.APPOINTMENTS, oldAppointment);
