@@ -26,8 +26,8 @@ function requireDateInRangeForReport_(dateString) {
   return parseDate_(dateString);
 }
 
-function buildDashboard_(range) {
-  var appointments = getAgendaAppointments_(range.from, range.to);
+function buildDashboard_(range, appointments, clients) {
+  appointments = appointments || getAgendaAppointments_(range.from, range.to);
   var completed = appointments.filter(function(item) { return item.status === BARBER_BOOKING.statuses.COMPLETED; });
   var scheduled = appointments.filter(function(item) { return BARBER_BOOKING.activeAppointmentStatuses.indexOf(String(item.status)) >= 0; });
   var cancelled = appointments.filter(function(item) { return String(item.status).indexOf('CANCELLED') === 0; });
@@ -46,7 +46,7 @@ function buildDashboard_(range) {
   var serviceStats = Object.keys(serviceMap).map(function(key) { return serviceMap[key]; }).sort(function(a, b) { return b.quantity - a.quantity; });
   var clientIds = {};
   completed.forEach(function(item) { clientIds[item.clientId] = true; });
-  var clients = getSheetRecords_(BARBER_BOOKING.sheets.CLIENTS);
+  clients = clients || getSheetRecords_(BARBER_BOOKING.sheets.CLIENTS);
   var newClients = clients.filter(function(client) {
     return clientIds[client.id] && String(client.createdAt || '').slice(0, 10) >= range.from && String(client.createdAt || '').slice(0, 10) <= range.to;
   }).length;

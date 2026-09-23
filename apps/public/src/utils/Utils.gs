@@ -56,12 +56,7 @@ function getBusinessTimezone_() {
   var propertyTimezone = PropertiesService.getScriptProperties().getProperty('BUSINESS_TIMEZONE');
   if (propertyTimezone) return propertyTimezone;
   if (PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID')) {
-    try {
-      var sheetTimezone = findSheetRecordByField_(BARBER_BOOKING.sheets.SETTINGS, 'key', 'BUSINESS_TIMEZONE');
-      if (sheetTimezone && sheetTimezone.value) return String(sheetTimezone.value);
-    } catch (ignored) {
-      // Use the manifest timezone until the database is ready.
-    }
+    return String(getSetting_('BUSINESS_TIMEZONE', BARBER_BOOKING.defaultSettings.BUSINESS_TIMEZONE || BARBER_BOOKING.timezone));
   }
   return BARBER_BOOKING.defaultSettings.BUSINESS_TIMEZONE || BARBER_BOOKING.timezone;
 }
@@ -72,6 +67,29 @@ function formatDate_(date) {
 
 function formatTime_(date) {
   return Utilities.formatDate(date, getBusinessTimezone_(), 'HH:mm');
+}
+
+function normalizeDateValue_(value) {
+  if (value == null || value === '') return '';
+  if (value instanceof Date) return formatDate_(value);
+  var text = trim_(value);
+  if (/^\d{4}-\d{2}-\d{2}T/.test(text)) return text.slice(0, 10);
+  return text;
+}
+
+function normalizeTimeValue_(value) {
+  if (value == null || value === '') return '';
+  if (value instanceof Date) return formatTime_(value);
+  var text = trim_(value);
+  if (/^\d{4}-\d{2}-\d{2}T/.test(text)) return formatTime_(new Date(text));
+  var match = text.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  return match ? ('0' + match[1]).slice(-2) + ':' + match[2] : text;
+}
+
+function normalizeDateTimeValue_(value) {
+  if (value == null || value === '') return '';
+  if (value instanceof Date) return formatDateTime_(value);
+  return trim_(value);
 }
 
 function formatDateTime_(date) {

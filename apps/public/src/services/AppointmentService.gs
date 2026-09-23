@@ -152,15 +152,15 @@ function sanitizeAppointmentForClient_(appointment, client) {
     clientName: client.name,
     serviceName: appointment.serviceNameSnapshot,
     servicePrice: roundMoney_(appointment.servicePriceSnapshot),
-    date: appointment.date,
-    startTime: appointment.startTime,
-    endTime: appointment.endTime,
+    date: normalizeDateValue_(appointment.date),
+    startTime: normalizeTimeValue_(appointment.startTime),
+    endTime: normalizeTimeValue_(appointment.endTime),
     status: appointment.status,
     paymentStatus: appointment.paymentStatus,
     paymentMethod: appointment.paymentMethod || '',
     calendarSyncStatus: appointment.calendarSyncStatus,
     notificationStatus: appointment.notificationStatus,
-    createdAt: appointment.createdAt,
+    createdAt: normalizeDateTimeValue_(appointment.createdAt),
     cancelledAt: appointment.cancelledAt || ''
   };
 }

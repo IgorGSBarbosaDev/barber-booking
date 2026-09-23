@@ -1,16 +1,31 @@
+var SETTINGS_CACHE_KEY_ = 'barber_booking_settings_map_v1';
+
+function clearSettingsCache_() {
+  CacheService.getScriptCache().remove(SETTINGS_CACHE_KEY_);
+}
+
 function getSettingsMap_() {
+  var cached = CacheService.getScriptCache().get(SETTINGS_CACHE_KEY_);
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch (ignored) {
+      clearSettingsCache_();
+    }
+  }
   var settings = {};
   getSheetRecords_(BARBER_BOOKING.sheets.SETTINGS).forEach(function(record) {
     if (record.key) settings[String(record.key)] = String(record.value == null ? '' : record.value);
   });
+  CacheService.getScriptCache().put(SETTINGS_CACHE_KEY_, JSON.stringify(settings), 120);
   return settings;
 }
 
 function getSetting_(key, fallback) {
   var scriptValue = PropertiesService.getScriptProperties().getProperty(key);
   if (scriptValue != null && scriptValue !== '') return scriptValue;
-  var record = findSheetRecordByField_(BARBER_BOOKING.sheets.SETTINGS, 'key', key);
-  if (record && record.value != null && record.value !== '') return String(record.value);
+  var settings = getSettingsMap_();
+  if (settings[key] != null && settings[key] !== '') return String(settings[key]);
   if (BARBER_BOOKING.defaultSettings[key] != null) return BARBER_BOOKING.defaultSettings[key];
   return fallback;
 }
@@ -24,12 +39,13 @@ function setSetting_(key, value) {
   } else {
     appendSheetRecord_(sheetName, { key: key, value: value == null ? '' : String(value) });
   }
+  clearSettingsCache_();
 }
 
 function ensureDefaultSettings_() {
+  var settings = getSettingsMap_();
   Object.keys(BARBER_BOOKING.defaultSettings).forEach(function(key) {
-    var record = findSheetRecordByField_(BARBER_BOOKING.sheets.SETTINGS, 'key', key);
-    if (!record) setSetting_(key, BARBER_BOOKING.defaultSettings[key]);
+    if (settings[key] == null) setSetting_(key, BARBER_BOOKING.defaultSettings[key]);
   });
 }
 

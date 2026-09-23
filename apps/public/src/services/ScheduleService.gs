@@ -1,14 +1,14 @@
 function getScheduleForDate_(dateString) {
   var override = getSheetRecords_(BARBER_BOOKING.sheets.SCHEDULE_OVERRIDES).filter(function(record) {
-    return String(record.date) === dateString;
+    return normalizeDateValue_(record.date) === dateString;
   }).sort(function(a, b) {
     return Number(a._rowNumber) - Number(b._rowNumber);
   }).pop();
   if (override) {
     return {
       enabled: asBoolean_(override.enabled),
-      startTime: trim_(override.startTime),
-      endTime: trim_(override.endTime),
+      startTime: normalizeTimeValue_(override.startTime),
+      endTime: normalizeTimeValue_(override.endTime),
       source: 'override',
       id: override.id
     };
@@ -22,8 +22,8 @@ function getScheduleForDate_(dateString) {
   }
   return {
     enabled: asBoolean_(schedule.enabled),
-    startTime: trim_(schedule.startTime),
-    endTime: trim_(schedule.endTime),
+    startTime: normalizeTimeValue_(schedule.startTime),
+    endTime: normalizeTimeValue_(schedule.endTime),
     source: 'default',
     weekday: weekday
   };
@@ -44,13 +44,13 @@ function validateScheduleWindow_(enabled, startTime, endTime) {
 
 function getBlocksForDate_(dateString) {
   return getSheetRecords_(BARBER_BOOKING.sheets.BLOCKS).filter(function(record) {
-    return String(record.date) === dateString;
+    return normalizeDateValue_(record.date) === dateString;
   }).map(function(record) {
     return {
       id: record.id,
-      date: record.date,
-      startTime: record.startTime,
-      endTime: record.endTime,
+      date: normalizeDateValue_(record.date),
+      startTime: normalizeTimeValue_(record.startTime),
+      endTime: normalizeTimeValue_(record.endTime),
       reason: record.reason || ''
     };
   });

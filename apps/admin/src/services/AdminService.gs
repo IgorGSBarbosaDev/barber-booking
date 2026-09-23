@@ -1,3 +1,17 @@
+var SCHEDULE_CACHE_KEY_ = 'barber_booking_admin_schedule_v1';
+
+function clearScheduleCache_() {
+  CacheService.getScriptCache().remove(SCHEDULE_CACHE_KEY_);
+}
+
+function indexClientsById_(clients) {
+  var index = {};
+  (clients || []).forEach(function(client) {
+    if (client && client.id != null) index[String(client.id)] = client;
+  });
+  return index;
+}
+
 function saveService_(payload) {
   var data = parsePayload_(payload);
   var name = requireText_(data.name, 'nome', 2, 100);
@@ -51,22 +65,33 @@ function saveWorkSchedule_(payload) {
       appendSheetRecord_(BARBER_BOOKING.sheets.WORK_SCHEDULE, { weekday: weekday, enabled: normalized.enabled, startTime: normalized.startTime, endTime: normalized.endTime });
     }
   });
+  clearScheduleCache_();
   logAudit_('SCHEDULE_CHANGED', 'WORK_SCHEDULE', '', { rows: rows.length });
   return getScheduleSettings_();
 }
 
 function getScheduleSettings_() {
-  return {
+  var cached = CacheService.getScriptCache().get(SCHEDULE_CACHE_KEY_);
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch (ignored) {
+      clearScheduleCache_();
+    }
+  }
+  var result = {
     workSchedule: getSheetRecords_(BARBER_BOOKING.sheets.WORK_SCHEDULE).sort(function(a, b) { return Number(a.weekday) - Number(b.weekday); }).map(function(row) {
-      return { weekday: Number(row.weekday), enabled: asBoolean_(row.enabled), startTime: row.startTime || '', endTime: row.endTime || '' };
+      return { weekday: Number(row.weekday), enabled: asBoolean_(row.enabled), startTime: normalizeTimeValue_(row.startTime), endTime: normalizeTimeValue_(row.endTime) };
     }),
     overrides: getSheetRecords_(BARBER_BOOKING.sheets.SCHEDULE_OVERRIDES).map(function(row) {
-      return { id: row.id, date: row.date, enabled: asBoolean_(row.enabled), startTime: row.startTime || '', endTime: row.endTime || '' };
+      return { id: row.id, date: normalizeDateValue_(row.date), enabled: asBoolean_(row.enabled), startTime: normalizeTimeValue_(row.startTime), endTime: normalizeTimeValue_(row.endTime) };
     }).sort(function(a, b) { return String(a.date).localeCompare(String(b.date)); }),
     blocks: getSheetRecords_(BARBER_BOOKING.sheets.BLOCKS).map(function(row) {
-      return { id: row.id, date: row.date, startTime: row.startTime, endTime: row.endTime, reason: row.reason || '' };
+      return { id: row.id, date: normalizeDateValue_(row.date), startTime: normalizeTimeValue_(row.startTime), endTime: normalizeTimeValue_(row.endTime), reason: row.reason || '' };
     }).sort(function(a, b) { return String(a.date).localeCompare(String(b.date)); })
   };
+  CacheService.getScriptCache().put(SCHEDULE_CACHE_KEY_, JSON.stringify(result), 120);
+  return result;
 }
 
 function saveScheduleOverride_(payload) {
@@ -85,6 +110,7 @@ function saveScheduleOverride_(payload) {
   } else {
     record = appendSheetRecord_(sheetName, { id: generateId_('OVR'), date: date, enabled: normalized.enabled, startTime: normalized.startTime, endTime: normalized.endTime });
   }
+  clearScheduleCache_();
   logAudit_('SCHEDULE_CHANGED', 'SCHEDULE_OVERRIDE', record.id, { date: date });
   return getScheduleSettings_();
 }
@@ -93,6 +119,7 @@ function deleteScheduleOverride_(id) {
   var record = findSheetRecordById_(BARBER_BOOKING.sheets.SCHEDULE_OVERRIDES, id);
   if (!record) throwAppError_('OVERRIDE_NOT_FOUND', 'Exceção não encontrada.');
   deleteSheetRecord_(BARBER_BOOKING.sheets.SCHEDULE_OVERRIDES, record);
+  clearScheduleCache_();
   logAudit_('SCHEDULE_CHANGED', 'SCHEDULE_OVERRIDE', id, { deleted: true });
   return getScheduleSettings_();
 }
@@ -117,6 +144,7 @@ function saveBlock_(payload) {
   } else {
     record = appendSheetRecord_(sheetName, { id: generateId_('BLK'), date: date, startTime: startTime, endTime: endTime, reason: trim_(data.reason).slice(0, 200) });
   }
+  clearScheduleCache_();
   logAudit_('BLOCK_CREATED', 'BLOCK', record.id, { date: date, startTime: startTime, endTime: endTime });
   return getScheduleSettings_();
 }
@@ -125,6 +153,7 @@ function deleteBlock_(id) {
   var record = findSheetRecordById_(BARBER_BOOKING.sheets.BLOCKS, id);
   if (!record) throwAppError_('BLOCK_NOT_FOUND', 'Bloqueio não encontrado.');
   deleteSheetRecord_(BARBER_BOOKING.sheets.BLOCKS, record);
+  clearScheduleCache_();
   logAudit_('BLOCK_CREATED', 'BLOCK', id, { deleted: true });
   return getScheduleSettings_();
 }

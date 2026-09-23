@@ -152,9 +152,9 @@ function sanitizeAppointmentForClient_(appointment, client) {
     clientName: client.name,
     serviceName: appointment.serviceNameSnapshot,
     servicePrice: roundMoney_(appointment.servicePriceSnapshot),
-    date: appointment.date,
-    startTime: appointment.startTime,
-    endTime: appointment.endTime,
+    date: normalizeDateValue_(appointment.date),
+    startTime: normalizeTimeValue_(appointment.startTime),
+    endTime: normalizeTimeValue_(appointment.endTime),
     status: appointment.status,
     paymentStatus: appointment.paymentStatus,
     paymentMethod: appointment.paymentMethod || '',
@@ -165,8 +165,10 @@ function sanitizeAppointmentForClient_(appointment, client) {
   };
 }
 
-function sanitizeAppointmentForAdmin_(appointment) {
-  var client = getClientById_(appointment.clientId) || { name: '', phone: '', email: '' };
+function sanitizeAppointmentForAdmin_(appointment, clientsById) {
+  var client = clientsById && clientsById[String(appointment.clientId)]
+    ? clientsById[String(appointment.clientId)]
+    : getClientById_(appointment.clientId) || { name: '', phone: '', email: '' };
   return {
     id: appointment.id,
     clientId: appointment.clientId,
@@ -186,9 +188,9 @@ function sanitizeAppointmentForAdmin_(appointment) {
     notificationStatus: appointment.notificationStatus || '',
     rescheduledFromId: appointment.rescheduledFromId || '',
     rescheduledToId: appointment.rescheduledToId || '',
-    createdAt: appointment.createdAt,
-    updatedAt: appointment.updatedAt,
-    cancelledAt: appointment.cancelledAt || ''
+    createdAt: normalizeDateTimeValue_(appointment.createdAt),
+    updatedAt: normalizeDateTimeValue_(appointment.updatedAt),
+    cancelledAt: normalizeDateTimeValue_(appointment.cancelledAt)
   };
 }
 

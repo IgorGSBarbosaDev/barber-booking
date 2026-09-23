@@ -45,6 +45,8 @@ function setupSystem_() {
   ensureDatabaseSchema_(spreadsheet);
   ensureDefaultSettings_();
   seedDefaultSchedule_();
+  properties.setProperty('BARBER_BOOKING_SCHEMA_VERSION', String(BARBER_BOOKING.schemaVersion || '1'));
+  properties.setProperty('BARBER_BOOKING_SCHEMA_SPREADSHEET_ID', spreadsheet.getId());
   if (!properties.getProperty('APP_SECRET')) properties.setProperty('APP_SECRET', generateToken_());
   if (!properties.getProperty('CALENDAR_ID')) properties.setProperty('CALENDAR_ID', 'primary');
   var effectiveEmail = '';
@@ -67,8 +69,25 @@ function setupSystem_() {
 
 function ensureSystemReady_() {
   var spreadsheet = getConfiguredSpreadsheet_();
-  ensureDatabaseSchema_(spreadsheet);
-  ensureDefaultSettings_();
-  seedDefaultSchedule_();
+  var properties = PropertiesService.getScriptProperties();
+  var schemaVersion = String(BARBER_BOOKING.schemaVersion || '1');
+  var isReady = properties.getProperty('BARBER_BOOKING_SCHEMA_VERSION') === schemaVersion
+    && properties.getProperty('BARBER_BOOKING_SCHEMA_SPREADSHEET_ID') === spreadsheet.getId();
+  if (isReady) return spreadsheet;
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    isReady = properties.getProperty('BARBER_BOOKING_SCHEMA_VERSION') === schemaVersion
+      && properties.getProperty('BARBER_BOOKING_SCHEMA_SPREADSHEET_ID') === spreadsheet.getId();
+    if (!isReady) {
+      ensureDatabaseSchema_(spreadsheet);
+      ensureDefaultSettings_();
+      seedDefaultSchedule_();
+      properties.setProperty('BARBER_BOOKING_SCHEMA_VERSION', schemaVersion);
+      properties.setProperty('BARBER_BOOKING_SCHEMA_SPREADSHEET_ID', spreadsheet.getId());
+    }
+  } finally {
+    lock.releaseLock();
+  }
   return spreadsheet;
 }

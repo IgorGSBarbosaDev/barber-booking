@@ -25,7 +25,16 @@ for (const app of ['public', 'admin']) {
   }
   const source = fs.readFileSync(path.join(projectRoot, 'apps', app, 'src', 'Code.gs'), 'utf8');
   if (!/function\s+doGet\s*\(/.test(source)) errors.push(app + ': doGet ausente');
+  const setup = fs.readFileSync(path.join(projectRoot, 'apps', app, 'src', 'services', 'SetupService.gs'), 'utf8');
+  if (!setup.includes('BARBER_BOOKING_SCHEMA_VERSION')) errors.push(app + ': marcador de schema ausente');
+  const sheets = fs.readFileSync(path.join(projectRoot, 'apps', app, 'src', 'repositories', 'SheetRepository.gs'), 'utf8');
+  if (!sheets.includes('getSheetByName(sheetName) || ensureSheetSchema_')) errors.push(app + ': leitura de aba ainda revalida schema');
 }
+
+const adminController = fs.readFileSync(path.join(projectRoot, 'apps', 'admin', 'src', 'controllers', 'AdminController.gs'), 'utf8');
+if (!/function\s+adminGetDashboardData\s*\(/.test(adminController)) errors.push('admin: endpoint combinado do dashboard ausente');
+const adminView = fs.readFileSync(path.join(projectRoot, 'apps', 'admin', 'src', 'views', 'AdminApp.html'), 'utf8');
+if (!adminView.includes("callServer('adminGetDashboardData'")) errors.push('admin: frontend ainda faz chamadas separadas para o dashboard');
 
 const config = fs.readFileSync(path.join(projectRoot, 'apps', 'public', 'src', 'utils', 'Config.gs'), 'utf8');
 for (const sheet of requiredSheets) {

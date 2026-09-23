@@ -45,7 +45,27 @@ function adminGetAgenda(payload) {
     var to = trim_(data.to || from);
     requireDateInRangeForReport_(from);
     requireDateInRangeForReport_(to);
-    return getAgendaAppointments_(from, to).map(sanitizeAppointmentForAdmin_);
+    var clientsById = indexClientsById_(getSheetRecords_(BARBER_BOOKING.sheets.CLIENTS));
+    return getAgendaAppointments_(from, to).map(function(appointment) {
+      return sanitizeAppointmentForAdmin_(appointment, clientsById);
+    });
+  });
+}
+
+function adminGetDashboardData(payload) {
+  return apiCall_(function() {
+    requireAdmin_();
+    ensureSystemReady_();
+    var range = normalizeDashboardRange_(payload);
+    var appointments = getAgendaAppointments_(range.from, range.to);
+    var clients = getSheetRecords_(BARBER_BOOKING.sheets.CLIENTS);
+    var clientsById = indexClientsById_(clients);
+    return {
+      dashboard: buildDashboard_(range, appointments, clients),
+      agenda: appointments.map(function(appointment) {
+        return sanitizeAppointmentForAdmin_(appointment, clientsById);
+      })
+    };
   });
 }
 
@@ -181,9 +201,10 @@ function adminGetClientHistory(clientId) {
     ensureSystemReady_();
     var client = getClientById_(clientId);
     if (!client) throwAppError_('CLIENT_NOT_FOUND', 'Cliente não encontrado.');
+    var clientsById = indexClientsById_([client]);
     return {
       client: { id: client.id, name: client.name, phone: client.phone, email: client.email, emailVerified: asBoolean_(client.emailVerified) },
-      appointments: getSheetRecords_(BARBER_BOOKING.sheets.APPOINTMENTS).filter(function(item) { return item.clientId === client.id; }).sort(function(a, b) { return String(b.date + b.startTime).localeCompare(String(a.date + a.startTime)); }).map(sanitizeAppointmentForAdmin_)
+      appointments: getSheetRecords_(BARBER_BOOKING.sheets.APPOINTMENTS).filter(function(item) { return item.clientId === client.id; }).sort(function(a, b) { return String(b.date + b.startTime).localeCompare(String(a.date + a.startTime)); }).map(function(appointment) { return sanitizeAppointmentForAdmin_(appointment, clientsById); })
     };
   });
 }

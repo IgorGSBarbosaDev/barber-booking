@@ -4,20 +4,23 @@ function ensureSheetSchema_(spreadsheet, sheetName) {
   if (!sheet) {
     sheet = spreadsheet.insertSheet(sheetName);
   }
+  var headersChanged = false;
   var lastColumn = sheet.getLastColumn();
   var existingHeaders = lastColumn > 0
     ? sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map(function(value) { return trim_(value); })
     : [];
   if (!existingHeaders.length || existingHeaders.every(function(header) { return !header; })) {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    headersChanged = true;
   } else {
     var missingHeaders = headers.filter(function(header) { return existingHeaders.indexOf(header) === -1; });
     if (missingHeaders.length) {
       sheet.getRange(1, existingHeaders.length + 1, 1, missingHeaders.length).setValues([missingHeaders]);
+      headersChanged = true;
     }
   }
-  sheet.setFrozenRows(1);
-  sheet.getRange(1, 1, 1, Math.max(headers.length, sheet.getLastColumn())).setFontWeight('bold');
+  if (sheet.getFrozenRows() !== 1) sheet.setFrozenRows(1);
+  if (headersChanged) sheet.getRange(1, 1, 1, Math.max(headers.length, sheet.getLastColumn())).setFontWeight('bold');
   return sheet;
 }
 
@@ -30,7 +33,7 @@ function ensureDatabaseSchema_(spreadsheet) {
 
 function getDataSheet_(sheetName) {
   var spreadsheet = getConfiguredSpreadsheet_();
-  return ensureSheetSchema_(spreadsheet, sheetName);
+  return spreadsheet.getSheetByName(sheetName) || ensureSheetSchema_(spreadsheet, sheetName);
 }
 
 function getSheetHeaders_(sheet) {

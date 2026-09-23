@@ -1,4 +1,5 @@
 var BARBER_BOOKING = {
+  schemaVersion: '2',
   timezone: 'America/Sao_Paulo',
   sheets: {
     CLIENTS: 'CLIENTS',
